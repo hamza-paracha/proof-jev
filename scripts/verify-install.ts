@@ -28,6 +28,9 @@ try {
   }
   const evaluation = JSON.parse(execFileSync(process.execPath, ["--import", "tsx", join(consumer, "node_modules/proof-jev/scripts/evaluate-review.ts")], { cwd: consumer, encoding: "utf8" }));
   assert.equal(evaluation.mode, "dry_run"); assert.equal(evaluation.usage.calls, 0); assert.equal(evaluation.metrics.expectedLabels, 8);
+  const showcase = JSON.parse(execFileSync(process.execPath, ["--import", "tsx", join(consumer, "node_modules/proof-jev/scripts/showcase.ts")], { cwd: consumer, encoding: "utf8", timeout: 120_000 }));
+  assert.equal(showcase.status, "passed"); assert.equal(showcase.newModelCalls, 0);
+  assert.match(await readFile(showcase.artifacts.html, "utf8"), /Green tests/);
   const environment = { PATH: process.env.PATH ?? "", HOME: process.env.HOME ?? "", VERIFY_MODEL_MAX_CALLS: "0", VERIFY_OUTPUT_DIR: join(directory, "reports"), VOUCH_PROJECT_ROOT: changes.root, VOUCH_ALLOW_EXECUTION: "1" };
   const readiness = JSON.parse(execFileSync(process.execPath, [binary, "--doctor"], { cwd: consumer, env: environment, encoding: "utf8" }));
   assert.equal(readiness.status, "ready");
@@ -45,5 +48,5 @@ try {
   const strengthened = JSON.parse(execFileSync(process.execPath, [binary, "verify-change", "--project", changes.root, "--allow-exec"], { cwd: consumer, env: environment, encoding: "utf8", timeout: 60_000 }));
   assert.equal(strengthened.status, "evidence_collected");
   console.log(JSON.stringify({ changeMcp: "gaps_found", changeCli: strengthened.status, package: packed.filename, fileCount: paths.length, installedOutsideCheckout: true,
-    doctor: readiness.status, mcp: summary.status, modelCalls: 0, packageVersion: JSON.parse(await readFile(resolve("package.json"), "utf8")).version }, null, 2));
+    doctor: readiness.status, mcp: summary.status, showcase: showcase.status, modelCalls: 0, packageVersion: JSON.parse(await readFile(resolve("package.json"), "utf8")).version }, null, 2));
 } finally { await client.close(); await fixture.close(); await changes.close(); await rm(directory, { recursive: true, force: true }); }

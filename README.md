@@ -17,6 +17,25 @@
   <a href="CONTRIBUTING.md">Contribute</a>
 </p>
 
+## Green tests. Bad order.
+
+A negative-quantity order reaches disk while the example's test passes. Proof-Jev connects a Jev review of the missing validation to a real browser reproduction and mutation evidence that explains what the tests missed.
+
+```sh
+npm run showcase
+```
+
+| Evidence from the connected demo | Result |
+| --- | --- |
+| Ordinary test against the seeded bug | Passes |
+| Browser submits quantity `−1` | Fails the expected rejection; invalid order is saved |
+| Same three mutations, weak → stronger tests | 3 surviving → 0 surviving |
+| Repaired app, identical browser workflow | HTTP 400; no order persisted; passes |
+
+Open the generated offline HTML report to inspect the source pair, exact patches, browser traces, and independent disk reads. **Jev's review is a real recorded response; browser and mutation checks execute on every run.** No API key needed. The bug is seeded and the repair is scripted; this is a reproducible example, not an autonomous-repair or general-accuracy claim.
+
+[How the showcase works →](docs/showcase.md) · [Install first →](#try-it-in-two-minutes)
+
 ## Review the diff with structured Jev judgments
 
 proof-jev exposes `review_change`, `assess_pr`, and `check_file`. Jev evaluates each changed file for breaking behavior, risk, missing tests, error handling, input validation, side effects and merge readiness. Reports preserve probabilities, warnings, uncertainty and incomplete context. These judgments complement executable browser and mutation evidence.
@@ -74,7 +93,8 @@ Use `proof-jev analyze --project /path/to/repo --base HEAD` for read-only analys
 | Find tests that miss a changed behavior | Diff-aware mutation runs with exact surviving patches |
 | Check an agent’s local app change | Real Chromium interactions followed by explicit assertions |
 | Reproduce a misleading success message | A separate same-origin JSON read to check the expected state |
-| Give an agent enough context to fix a failure | Structured reports, failing observations, action records, and a replay file |
+| Give an agent enough context to fix a failure | Offline HTML and structured reports, failing observations, action records, and a replay file |
+| Verify invalid-input handling | Exact HTTP response expectations plus independent state assertions |
 | Connect verification to your coding workflow | Seven MCP tools, a CLI, and local plugin bundles for Codex and Claude Code |
 | Handle a control label that differs from the intent | Optional Jev selection, with an explicitly enabled stronger-model fallback |
 | Keep routine verification predictable | Models off by default, origin/write restrictions, deadlines, and persistent paid-call limits |
@@ -89,20 +109,14 @@ cd proof-jev
 npm ci
 npx playwright install chromium
 npm run verify -- --doctor
-npm run verify:demo
+npm run showcase
 ```
 
 On Linux, use `npx playwright install --with-deps chromium` to install browser system dependencies too.
 
-The demo starts two local apps and cleans them up automatically. Expected results:
+The showcase creates a disposable order application and Git repository, runs the checks, then cleans them up. It prints the path to `index.html` and exits successfully only when the expected before/after outcomes are observed. [Expected results and limits →](docs/showcase.md)
 
-```text
-false-success-toast  → failed   (success message, missing state change)
-persisted-write      → passed   (success message and expected state)
-model calls          → 0
-```
-
-The demo command exits successfully only when both expected outcomes are observed. For the separate disk-backed example, run `npm run verify:example`; it checks both the MCP result and the on-disk profile.
+For the smaller false-success-toast demonstration, use `npm run verify:demo`. The separate `npm run verify:example` checks a disk-backed profile application through MCP.
 
 The product and package are named `proof-jev`; the source repository is `hamza-paracha/proof-jev`. After `npm link`, use `proof-jev` or `proof-jev-guard`. Existing `vouch-jev`, `vouch-jev-guard`, `vouch` and `vouch-guard` commands, `vouch.config.json`, and environment variables remain supported.
 

@@ -9,6 +9,7 @@ export function runtimeFingerprint(): string {
   }
   for (const name of readdirSync(new URL("../change/", import.meta.url)).filter((n) => n.endsWith(".ts")).sort()) hash.update(name).update(readFileSync(new URL(`../change/${name}`, import.meta.url)));
   for (const name of readdirSync(new URL("../review/", import.meta.url)).filter((n) => n.endsWith(".ts")).sort()) hash.update(name).update(readFileSync(new URL(`../review/${name}`, import.meta.url)));
+  for (const name of readdirSync(new URL("../evidence/", import.meta.url)).filter((n) => n.endsWith(".ts")).sort()) hash.update(name).update(readFileSync(new URL(`../evidence/${name}`, import.meta.url)));
   for (const name of ["../signals.ts", "../findings.ts", "../settle.ts", "../page-model.ts", "../../package.json"]) hash.update(readFileSync(new URL(name, import.meta.url)));
   return hash.digest("hex");
 }

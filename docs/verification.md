@@ -18,6 +18,7 @@ Reports go to `out/verification/verify-<uuid>/`:
 
 | Artifact | Purpose |
 | --- | --- |
+| `report.html` | Self-contained offline view of steps, response observations, failures, and artifact links |
 | `report.json` | Status, findings, assertions, routing, usage, limits consumed, and evidence paths |
 | `trace.jsonl` | Structured actions, selected controls, timing, and bounded ARIA observations |
 | `workflow.json` | Replay input, with completed choices frozen as explicit clicks and models disabled |
@@ -75,6 +76,18 @@ The server also exposes `analyze_change` and `verify_change` for [code verificat
 ```
 
 Paths, accessible names and expected state must come from the app being tested; the example is not a built-in endpoint. `assertJson` makes a separate same-origin GET with the browser context's cookies, follows no redirects, and compares a scalar at the supplied field path. It polls briefly for eventual persistence. It is independent of the model's decision and of the rendered toast, but only as trustworthy as that endpoint: a cached or optimistic endpoint is not proof of durable storage.
+
+To verify an expected rejection, attach an exact response assertion to `click` or `choose`:
+
+```json
+{
+  "kind": "choose",
+  "intent": "Place order",
+  "expectResponse": { "method": "POST", "path": "/api/orders", "status": 400 }
+}
+```
+
+This observes the next response for that exact method and same-origin URL after the action starts. The response must occur and have the expected status; a missing or different response fails. Exactly one matching 4xx response is accepted. Duplicate responses, unrelated errors, and 5xx failures remain failures. Expectations accept statuses 200–499 and canonical paths without queries or wildcards. Write-path authorization is still required. End with an explicit outcome assertion such as `assertJson` to check that rejected data was not saved. Response observations and expectations are retained in reports and replay files.
 
 Supported steps: `goto`, `click`, `fill`, `choose`, `assertText`, `assertJson`, `assertUrl`, `assertSelector`, `assertAttribute`. Omit `choose.candidates` to discover eligible buttons, links and tabs. A unique exact label uses rules; ambiguous discovery is limited to eight controls. Use inspection and an explicit list when there are more. Finish with an assertion. Locators use exact accessible role/name matches; duplicate matches abstain. `assertText` expects exact visible text. The browser tool accepts no arbitrary JavaScript, shell commands, file reads, or model-generated actions. Separate [code verification tools](code-verification.md) execute operator-configured test commands in trusted repositories.
 

@@ -13,6 +13,9 @@ The product has two complementary directions: make browser verification usable f
 - [x] Transitive import impact analysis and affected-test discovery.
 - [x] Bounded mutation execution with baseline checks, fresh copies, repeated failures and concrete surviving-mutant evidence.
 - [x] CLI and MCP access, plus a weak-tests → strengthened-tests demonstration.
+- [x] Connected order showcase: recorded Jev review, live browser reproduction, independent disk evidence, and identical mutation comparisons.
+- [x] Exact response expectations for browser rejection flows, retained in free replays.
+- [x] Offline HTML evidence reports for structured review, mutation testing, and browser workflows.
 
 ## Structured review assessment implementation
 
@@ -48,5 +51,5 @@ The combined proof-jev server retains browser, mutation and structured review ca
 - Explicitly scoped cross-origin flows and third-party login redirects (current navigation stays on one origin).
 - WebSocket-dependent applications, visual assertions and screenshot baselines.
 - Parallel workflow execution, watch mode and a reusable GitHub Action.
-- HTML reports and configurable state polling.
+- Configurable state polling.
 - npm publication under an available package identity (GitHub distribution remains supported).

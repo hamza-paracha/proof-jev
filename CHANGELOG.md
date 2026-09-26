@@ -2,6 +2,11 @@
 
 ## Unreleased — Proof-Jev
 
+- Added a connected `npm run showcase` demonstration with recorded Jev review, live browser/disk checks, and identical weak/strong mutation comparisons.
+- Added offline HTML evidence reports to review, browser, and mutation workflows.
+- Added exact HTTP response expectations for click/choose actions, including rejection-path verification and replay preservation.
+- Added showcase documentation, a measured LinkedIn launch draft, and fresh-install/CI showcase validation.
+
 - Added exact Git line evidence to review reports and corrected new-file line counts, unusual-path handling, and Git formatting robustness.
 
 - Renamed the project, package, MCP server, and plugin to `proof-jev`; retained existing CLI aliases and configuration.

@@ -34,7 +34,8 @@
     "verify:review-live": "tsx --env-file-if-exists=.env scripts/verify-review-live.ts",
     "review:build": "node scripts/build-review-package.mjs",
     "verify:review-install": "tsx scripts/verify-review-install.ts",
-    "review:eval": "tsx scripts/evaluate-review.ts"
+    "review:eval": "tsx scripts/evaluate-review.ts",
+    "showcase": "tsx scripts/showcase.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
@@ -74,7 +75,9 @@
     "test/helpers/change-fixture.ts",
     "scripts/verify-review-live.ts",
     "scripts/evaluate-review.ts",
-    "evals/review/"
+    "evals/review/",
+    "scripts/showcase.ts",
+    "examples/order-guard/"
   ],
   "keywords": [
     "browser-testing",

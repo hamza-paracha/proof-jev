@@ -36,6 +36,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run review:eval -- --responses evals/review/recorded-jev-1.13.0.json
+      - run: npm run showcase
       - run: npm run verify:change-demo
       - run: npm run verify:demo
       - run: npm run verify:install

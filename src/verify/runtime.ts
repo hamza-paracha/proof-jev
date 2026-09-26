@@ -1,9 +1,10 @@
+import { browserHtml } from "../evidence/reports.ts";
 import { assertJson, assertDOM } from "./assertions.ts";
 import { loadSession } from "./sessions.ts";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
-import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
+import { chromium, type Browser, type BrowserContext, type Page, type Response } from "playwright";
 import { freeOracle, SignalCollector } from "../signals.ts";
 import { Settler } from "../settle.ts";
 import { createOriginProxy } from "./network.ts";
@@ -22,6 +23,7 @@ export interface StepRecord {
   reason?: string;
   selectedTarget?: Target;
   durationMs: number;
+  response?: { method: string; url: string; status: number };
   observation?: { url: string; aria: string };
 }
 export interface VerificationReport {
@@ -39,7 +41,7 @@ export interface VerificationReport {
   calls: CallRecord[];
   limits: { maxCallsPerRun: number; processMaxCalls: number; processMaxEstimatedUsd: number; estimatePerCallUsd: number; scope: "ledger" | "process" };
   cost: { attemptedCalls: number; estimatedReservedUsd: number; providerReportedCostUsd: number | null; inputTokens: number | null; outputTokens: number | null; processCallsUsed: number };
-  artifacts: { report: string; trace: string; replay: string };
+  artifacts: { report: string; trace: string; replay: string; html: string };
 }
 export interface VerifyOptions {
   outputDir?: string;
@@ -92,7 +94,7 @@ export async function verifyWorkflow(raw: unknown, options: VerifyOptions = {}):
     input, steps: [], findings: [], blockedRequests: [], calls: [],
     limits: { maxCallsPerRun: 3, processMaxCalls: budget.maxCalls, processMaxEstimatedUsd: budget.maxEstimatedUsd, estimatePerCallUsd: budget.estimatePerCallUsd, scope: budget.ledgerPath ? "ledger" : "process" },
     cost: { attemptedCalls: 0, estimatedReservedUsd: 0, providerReportedCostUsd: 0, inputTokens: 0, outputTokens: 0, processCallsUsed: budget.usedCalls },
-    artifacts: { report: join(directory, "report.json"), trace: join(directory, "trace.jsonl"), replay: join(directory, "workflow.json") },
+    artifacts: { report: join(directory, "report.json"), trace: join(directory, "trace.jsonl"), replay: join(directory, "workflow.json"), html: join(directory, "report.html") },
   };
   const controller = new AbortController();
   let timedOut = false;
@@ -110,8 +112,16 @@ export async function verifyWorkflow(raw: unknown, options: VerifyOptions = {}):
   // Closing the dedicated browser interrupts Playwright waits immediately.
   const closeOnAbort = () => { void browser?.close().catch(() => {}); };
   controller.signal.addEventListener("abort", closeOnAbort, { once: true });
+  let acceptedResponse: StepRecord["response"];
   const drain = (step: number) => {
-    for (const finding of freeOracle(collector.drain(), false).slice(0, 30)) {
+    const signals = collector.drain();
+    if (acceptedResponse) {
+      // Consume exactly one verified response; duplicates and unrelated failures remain errors.
+      const match = signals.httpErrors.findIndex(r => r.method === acceptedResponse!.method && r.url === acceptedResponse!.url && r.status === acceptedResponse!.status);
+      if (match !== -1) signals.httpErrors.splice(match, 1);
+      acceptedResponse = undefined;
+    }
+    for (const finding of freeOracle(signals, false).slice(0, 30)) {
       report.findings.push({ step, category: finding.category, message: finding.message });
     }
   };
@@ -157,13 +167,25 @@ export async function verifyWorkflow(raw: unknown, options: VerifyOptions = {}):
       active = { index, action: step, route: "rules", status: "stopped", durationMs: 0 };
       report.steps.push(active);
       await settler.markAction();
+      const expected = "expectResponse" in step ? step.expectResponse : undefined;
+      // Start observing before the action. A missing or wrong response fails the assertion.
+      let responseResult: Promise<{ response?: Response; error?: unknown }> | undefined;
+      const expectNextResponse = () => {
+        if (expected) responseResult = page!.waitForResponse(
+          r => r.url() === pathUrl(expected.path, target.origin) && r.request().method() === expected.method,
+          { timeout: timeout() },
+        ).then(response => ({ response }), error => ({ error }));
+      };
       switch (step.kind) {
         case "goto":
           await page.goto(pathUrl(step.path, target.origin), { waitUntil: "domcontentloaded", timeout: timeout() });
           break;
-        case "click":
-          await (await locate(page, step.target, timeout())).click({ timeout: timeout() });
+        case "click": {
+          const control = await locate(page, step.target, timeout());
+          expectNextResponse();
+          await control.click({ timeout: timeout() });
           break;
+        }
         case "fill":
           await (await locate(page, step.target, timeout())).fill(step.value, { timeout: timeout() });
           break;
@@ -188,7 +210,9 @@ export async function verifyWorkflow(raw: unknown, options: VerifyOptions = {}):
           active.route = selected.route;
           active.reason = selected.reason;
           active.selectedTarget = candidates[selected.index]!;
-          await (await locate(page, active.selectedTarget, timeout())).click({ timeout: timeout() });
+          const control = await locate(page, active.selectedTarget, timeout());
+          expectNextResponse();
+          await control.click({ timeout: timeout() });
           break;
         }
         case "assertText":
@@ -204,6 +228,14 @@ export async function verifyWorkflow(raw: unknown, options: VerifyOptions = {}):
         case "assertJson":
           await assertJson(context, step, pathUrl(step.path, target.origin), timeout(), controller.signal, { allowInsecureTLS: input.allowInsecureTLS, tlsCA: options.tlsCA });
           break;
+      }
+      if (responseResult && expected) {
+        const result = await responseResult;
+        if (result.error) throw result.error;
+        const response = result.response!;
+        active.response = { method: response.request().method(), url: response.url(), status: response.status() };
+        if (response.status() !== expected.status) throw new VerificationStop("failed", `Expected ${expected.method} ${expected.path} to return ${expected.status}; observed ${response.status()}`);
+        acceptedResponse = active.response;
       }
       await settle();
       controller.signal.throwIfAborted();
@@ -258,10 +290,11 @@ export async function verifyWorkflow(raw: unknown, options: VerifyOptions = {}):
     processCallsUsed: budget.usedCalls,
   };
   const safe = redactBrowserEvidence(report, session.secrets);
-  const replay = { ...safe.input, policy: "rules", steps: safe.steps.map((s) => s.selectedTarget ? { kind: "click", target: s.selectedTarget } : s.action) };
+  const replay = { ...safe.input, policy: "rules", steps: safe.steps.map((s) => s.selectedTarget ? { kind: "click", target: s.selectedTarget, ...("expectResponse" in s.action ? { expectResponse: s.action.expectResponse } : {}) } : s.action) };
   // Include steps after an early failure; freeze completed model decisions for a free replay.
   replay.steps.push(...safe.input.steps.slice(safe.steps.length));
   await Promise.all([
+    writeFile(safe.artifacts.html, browserHtml(safe), { mode: 0o600 }),
     writeFile(safe.artifacts.report, JSON.stringify(safe, null, 2) + "\n", { mode: 0o600 }),
     writeFile(safe.artifacts.trace, safe.steps.map((s) => JSON.stringify(s)).join("\n") + "\n", { mode: 0o600 }),
     writeFile(safe.artifacts.replay, JSON.stringify(replay, null, 2) + "\n", { mode: 0o600 }),

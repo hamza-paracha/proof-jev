@@ -1,3 +1,4 @@
+import { changeHtml } from "../evidence/reports.ts";
 import { constants } from "node:fs";
 import { cp, mkdtemp, mkdir, readFile, rm, writeFile, lstat, realpath } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -46,7 +47,7 @@ export async function verifyChange(raw: unknown, options: ChangeOptions): Promis
   const signal = options.signal ? AbortSignal.any([deadline, options.signal]) : deadline;
   const report: ChangeReport = { schemaVersion: 1, runId, status: "inconclusive", reason: "Verification did not complete", startedAt: new Date(started).toISOString(), durationMs: 0,
     plan, baseline: [], mutations: [], summary: { candidates: plan.candidateCount, scheduled: 0, tested: 0, detected: 0, survived: 0, invalid: 0, inconclusive: 0, untested: plan.candidateCount },
-    artifacts: { report: join(directory, "report.json"), markdown: join(directory, "report.md"), plan: join(directory, "plan.json") },
+    artifacts: { report: join(directory, "report.json"), markdown: join(directory, "report.md"), html: join(directory, "report.html"), plan: join(directory, "plan.json") },
     limitations: [...plan.limitations, "Commands execute trusted repository code in disposable copies, not an OS security sandbox.", "Two baseline runs and repeated failing mutants reduce, but cannot eliminate, nondeterminism.", "Only configured commands ran; no claim of whole-program correctness or runtime coverage is made."] };
   const workspace = await mkdtemp(join(tmpdir(), "vouch-change-")); const template = join(workspace, "template");
   const command = (args: string[]) => args.flatMap((arg) => {
@@ -129,7 +130,7 @@ export async function verifyChange(raw: unknown, options: ChangeOptions): Promis
       inconclusive: outcomes.filter((o) => o === "inconclusive").length, untested: Math.max(0, plan.candidateCount - outcomes.length) });
     report.durationMs = Date.now() - started;
     const safe = redact(report);
-    await Promise.all([writeFile(safe.artifacts.report, JSON.stringify(safe, null, 2) + "\n", { mode: 0o600 }),
+    await Promise.all([writeFile(safe.artifacts.html, changeHtml(safe), { mode: 0o600 }), writeFile(safe.artifacts.report, JSON.stringify(safe, null, 2) + "\n", { mode: 0o600 }),
       writeFile(safe.artifacts.plan, JSON.stringify(safe.plan, null, 2) + "\n", { mode: 0o600 }),
       writeFile(safe.artifacts.markdown, markdownReport(safe), { mode: 0o600 })]);
     return safe;

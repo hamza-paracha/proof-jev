@@ -26,8 +26,9 @@ try {
   await client.connect(new StdioClientTransport({ command: process.execPath, args: [binary, "--stdio"], cwd: consumer, env, stderr: "pipe" }));
   assert.deepEqual((await client.listTools()).tools.map(t => t.name), ["review_change", "assess_pr", "check_file"]);
   const result = await client.callTool({ name: "check_file", arguments: { file: "src/pricing.mjs" } });
-  const report = result.structuredContent as { status: string; cost: { totalCalls: number } };
+  const report = result.structuredContent as { status: string; cost: { totalCalls: number }; artifacts: { html: string } };
   assert.equal(report.status, "error"); assert.equal(report.cost.totalCalls, 0);
+  assert.match(await readFile(report.artifacts.html, "utf8"), /Structured code review/);
   assert.match(execFileSync(process.execPath, [binary, "--help"], { cwd: consumer, env, encoding: "utf8" }), /Code review only/);
   console.log(JSON.stringify({ package: packed.filename, installedOutsideCheckout: true, noBrowserDependency: true, threeTools: true, disabledByDefault: true, modelCalls: 0 }, null, 2));
 } finally { await client.close(); await fixture.close(); await rm(dir, { recursive: true, force: true }); }

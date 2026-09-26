@@ -9,6 +9,7 @@ const destination = join(root, "out/review-package");
 try {
   const source = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
   await mkdir(join(output, "bin")); await mkdir(join(output, "src/verify"), { recursive: true });
+  await cp(join(root, "src/evidence"), join(output, "src/evidence"), { recursive: true });
   await cp(join(root, "src/review"), join(output, "src/review"), { recursive: true });
   for (const file of ["routing.ts", "ledger.ts", "redact.ts", "schema.ts"]) await cp(join(root, "src/verify", file), join(output, "src/verify", file));
   await cp(join(root, "bin/guard.mjs"), join(output, "bin/guard.mjs")); await chmod(join(output, "bin/guard.mjs"), 0o755);

@@ -31,3 +31,12 @@ Favor actual correctness, review quality, usable installation, useful evidence, 
 - Forced machine-readable Git diff formatting and validated hunk counts so formatting preferences cannot silently hide changed code.
 - Validation: the expanded 154-test suite and focused parser/report tests pass; recorded-answer replay still needs no model calls.
 - Model judgments remain file-level. Source locations are deterministic Git evidence, not invented model diagnoses.
+
+### September 26, 2026 — connected showcase and inspectable reports
+
+- Added a one-command order-validation showcase connecting a real recorded Jev judgment to live browser, disk, and mutation evidence. Weak tests miss all three sampled faults; strengthened tests detect the same three. The repair is explicitly scripted and the fixture is synthetic.
+- Added offline HTML reports to all three verification paths, with escaped evidence, local artifact links, responsive layout, and no scripts or remote assets.
+- The showcase exposed a verifier gap: correct HTTP 400 validation responses were treated as unexpected failures. Added exact per-action response expectations, observed response evidence, and preserved expectations in replay. Missing/wrong responses, duplicate failures, unrelated errors, and server failures still fail.
+- Validation: 163 automated tests pass; full and browser-free standalone fresh installs pass, including running the packaged showcase outside the checkout. TypeScript and plugin builds pass. Five generated reports passed desktop/mobile overflow, link, offline-network, and keyboard checks. No new model calls were made.
+- Added the showcase to CI, refreshed the README/roadmap, and drafted a LinkedIn launch post with measured results and explicit limitations.
+- Next: broader independently labelled review cases and runtime coverage for mutation attribution remain open; this showcase does not establish those capabilities.

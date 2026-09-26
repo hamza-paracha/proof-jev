@@ -17,7 +17,7 @@ git clone https://github.com/hamza-paracha/proof-jev.git
 cd proof-jev
 npm ci
 npx playwright install chromium
-npm run verify:demo
+npm run showcase
 ```
 
 Node.js 22+ required. Linux users may need `npx playwright install --with-deps chromium`.
@@ -28,6 +28,12 @@ This is an alpha for trusted repositories and controlled local HTTP(S) applicati
 
 Proof-Jev is an open-source project using Jev: Jev-powered code review for coding agents, backed by mutation checks, browser assertions and replayable evidence.
 
-The demo catches a form that says “Saved” without saving, then verifies the working version. No API key required. MCP + CLI. Local Codex and Claude Code plugins. MIT licensed.
+The connected demo shows passing tests that miss a negative order saved to disk, then strengthens those tests to detect the same three sampled mutations and verifies the repair. It replays a real Jev response; the browser, disk, and mutation checks execute on each run. No API key required. MCP + CLI. Local Codex and Claude Code plugins. MIT licensed.
 
 Try it: https://github.com/hamza-paracha/proof-jev
+
+## Launch assets
+
+- [Connected showcase and expected results](showcase.md)
+- [LinkedIn draft and posting notes](linkedin-post.md)
+- Run `npm run showcase` to generate an offline HTML evidence report suitable for a real product screenshot.

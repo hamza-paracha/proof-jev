@@ -1,3 +1,4 @@
+import { reviewHtml } from "../evidence/reports.ts";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -23,7 +24,7 @@ export interface GuardReport {
   totals: { filesChanged: number; filesReviewed: number; highConfidenceFlags: number; mediumConfidenceWarnings: number; lowConfidenceUncertain: number };
   incomplete: boolean; skipped: { file: string; reason: string }[]; limitations: string[];
   cost: { totalCalls: number; totalInputTokens: number | null; totalOutputTokens: number | null; totalEstimatedUsd: number | null; reservedEstimatedUsd: number; inputPricePerMillion: number | null; providerReportedCostUsd: null };
-  artifacts: { report: string; markdown: string };
+  artifacts: { report: string; markdown: string; html: string };
 }
 function markdown(report: GuardReport): string {
   const files = [...report.files, ...(report.pr ? [report.pr] : [])];
@@ -56,7 +57,7 @@ export async function reviewCode(action: ReviewAction, raw: unknown, options: Re
     incomplete: diff.truncated, skipped: diff.skipped,
     limitations: ["Model judgments are advisory; no code, tests or browser workflows were executed.", "Confidence bands are not calibrated on this repository and do not authorize automatic merging.", "Changed-line evidence comes from Git. Model judgments cover a whole file and are not diagnoses of individual lines.", "Missing callers, tests or truncated context can hide defects. Secret scrubbing is not a comprehensive scanner.", "Latency is measured per run, not guaranteed; token cost is an estimate, not a provider invoice."],
     cost: { totalCalls: 0, totalInputTokens: 0, totalOutputTokens: 0, totalEstimatedUsd: 0, reservedEstimatedUsd: 0, inputPricePerMillion: price, providerReportedCostUsd: null },
-    artifacts: { report: join(directory, "report.json"), markdown: join(directory, "report.md") } };
+    artifacts: { report: join(directory, "report.json"), markdown: join(directory, "report.md"), html: join(directory, "report.html") } };
   const budget = options.budget ?? new ModelBudget();
   let unknownUsage = false;
   const judge = async (file: string, request: ReviewRequest): Promise<FileJudgment> => {
@@ -102,6 +103,6 @@ export async function reviewCode(action: ReviewAction, raw: unknown, options: Re
   else report.cost.totalEstimatedUsd = report.cost.totalCalls === 0 ? 0 : report.cost.inputPricePerMillion === null ? null : report.cost.totalInputTokens! * report.cost.inputPricePerMillion / 1_000_000;
   report.durationMs = Date.now() - started;
   const safe = redact(report);
-  await Promise.all([writeFile(report.artifacts.report, JSON.stringify(safe, null, 2) + "\n", { mode: 0o600 }), writeFile(report.artifacts.markdown, markdown(safe), { mode: 0o600 })]);
+  await Promise.all([writeFile(report.artifacts.html, reviewHtml(safe), { mode: 0o600 }), writeFile(report.artifacts.report, JSON.stringify(safe, null, 2) + "\n", { mode: 0o600 }), writeFile(report.artifacts.markdown, markdown(safe), { mode: 0o600 })]);
   return safe;
 }

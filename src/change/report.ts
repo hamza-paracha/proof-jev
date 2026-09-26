@@ -10,7 +10,7 @@ export interface ChangeReport {
   reason: string; startedAt: string; durationMs: number; plan: ChangePlan;
   setup?: CommandResult; validation?: CommandResult; baseline: CommandResult[]; finalBaseline?: CommandResult;
   mutations: MutationResult[]; summary: { candidates: number; scheduled: number; tested: number; detected: number; survived: number; invalid: number; inconclusive: number; untested: number };
-  artifacts: { report: string; markdown: string; plan: string }; limitations: string[];
+  artifacts: { report: string; markdown: string; html: string; plan: string }; limitations: string[];
 }
 const escape = (value: string) => value.replace(/[\r\n]+/g, " ").replace(/\|/g, "\\|").replace(/`/g, "'");
 export function markdownReport(report: ChangeReport) {
