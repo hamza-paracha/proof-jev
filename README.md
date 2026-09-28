@@ -40,7 +40,7 @@ Open the generated offline HTML report to inspect the source pair, exact patches
 
 proof-jev exposes `review_change`, `assess_pr`, and `check_file`. Jev evaluates each changed file for breaking behavior, risk, missing tests, error handling, input validation, side effects and merge readiness. Reports preserve probabilities, warnings, uncertainty and incomplete context. These judgments complement executable browser and mutation evidence.
 
-Use the standalone `proof-jev-guard` entry point for code review without Chromium, or all seven tools through the proof-jev MCP server. Paid review requires explicit provider and persistent-budget configuration. A ten-file synthetic review measured **638 ms** in a real-provider check; this is a smoke measurement, not an accuracy claim or latency guarantee.
+Use the standalone `proof-jev-guard` entry point for code review without Chromium, or all eight tools through the proof-jev MCP server. Paid review requires explicit provider and persistent-budget configuration. A ten-file synthetic review measured **638 ms** in a real-provider check; this is a smoke measurement, not an accuracy claim or latency guarantee.
 
 [Setup, verdict semantics and examples →](docs/structured-review.md)
 
@@ -95,7 +95,7 @@ Use `proof-jev analyze --project /path/to/repo --base HEAD` for read-only analys
 | Reproduce a misleading success message | A separate same-origin JSON read to check the expected state |
 | Give an agent enough context to fix a failure | Offline HTML and structured reports, failing observations, action records, and a replay file |
 | Verify invalid-input handling | Exact HTTP response expectations plus independent state assertions |
-| Connect verification to your coding workflow | Seven MCP tools, a CLI, and local plugin bundles for Codex and Claude Code |
+| Connect verification to your coding workflow | Eight MCP tools, a CLI, and local plugin bundles for Codex and Claude Code |
 | Handle a control label that differs from the intent | Optional Jev selection, with an explicitly enabled stronger-model fallback |
 | Keep routine verification predictable | Models off by default, origin/write restrictions, deadlines, and persistent paid-call limits |
 
@@ -119,6 +119,19 @@ The showcase creates a disposable order application and Git repository, runs the
 For the smaller false-success-toast demonstration, use `npm run verify:demo`. The separate `npm run verify:example` checks a disk-backed profile application through MCP.
 
 The product and package are named `proof-jev`; the source repository is `hamza-paracha/proof-jev`. After `npm link`, use `proof-jev` or `proof-jev-guard`. Existing `vouch-jev`, `vouch-jev-guard`, `vouch` and `vouch-guard` commands, `vouch.config.json`, and environment variables remain supported.
+
+## Use the plugin
+
+Build the local Codex / Claude Code plugin with `npm run plugin:build`. It includes four workflows:
+
+- **Set up Proof-Jev** — see what's ready and fix missing configuration.
+- **Review changes** — investigate Jev findings against the actual code.
+- **Check tests** — find deliberate faults that your tests miss.
+- **Verify local app** — try the browser flow and check what got saved.
+
+The launcher detects the Git project opened by your host. `get_setup_status` reports each capability separately, with actionable setup steps. Browser checks and code analysis need no model key; mutation execution and paid review remain explicitly configured.
+
+[Plugin installation and first run →](docs/plugin.md)
 
 ## Use it from your coding agent
 

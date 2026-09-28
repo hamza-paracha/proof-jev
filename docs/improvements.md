@@ -40,3 +40,12 @@ Favor actual correctness, review quality, usable installation, useful evidence, 
 - Validation: 163 automated tests pass; full and browser-free standalone fresh installs pass, including running the packaged showcase outside the checkout. TypeScript and plugin builds pass. Five generated reports passed desktop/mobile overflow, link, offline-network, and keyboard checks. No new model calls were made.
 - Added the showcase to CI, refreshed the README/roadmap, and drafted a LinkedIn launch post with measured results and explicit limitations.
 - Next: broader independently labelled review cases and runtime coverage for mutation attribution remain open; this showcase does not establish those capabilities.
+
+### September 28, 2026 — usable plugin workflows
+
+- Rewrote the LinkedIn draft in a more conversational voice, keeping the recorded-review and scripted-demo facts.
+- Added separate setup, review, test-quality, and browser skills with task-specific prompts in the plugin UI.
+- Added `get_setup_status`: separate capability readiness, project/config checks, optional review-budget availability, and concrete recovery instructions without executing code or calling a provider.
+- Added a dedicated plugin launcher that discovers the host's Git project, respects explicit project configuration, and avoids selecting the plugin installation itself. Discovery does not grant execution or enable paid calls.
+- Added a real manifest-launch smoke check in a separate fixture repository and the plugin directory. CI now checks the eight-tool plugin, discovered project analysis, and disabled-by-default execution/review.
+- Validation: 164 tests pass; full fresh installation, manifest/skill validation, and native local installation checked. Prior legacy plugins remain installed; select Proof-Jev for the new workflows.

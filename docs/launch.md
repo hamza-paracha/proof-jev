@@ -8,7 +8,7 @@ Jev reviews each changed file for breaking behavior, risk, missing tests, error 
 
 It runs through MCP or a CLI, with local plugin bundles for Codex and Claude Code. Jev review and optional browser decisions require an API key, explicit call limits and persistent reservations. Exact matches, browser assertions and mutation checks need no model. See the [Jev review setup](structured-review.md).
 
-The alpha includes seven MCP tools and a standalone review package that needs no browser. A seeded missing-write bug was reproduced through the installed runtime, repaired in source, and verified against an independent disk read.
+The alpha includes eight MCP tools and a standalone review package that needs no browser. A seeded missing-write bug was reproduced through the installed runtime, repaired in source, and verified against an independent disk read.
 
 Try the free demonstration:
 

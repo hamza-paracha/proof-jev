@@ -120,7 +120,7 @@ it('real MCP transport exposes all three review tools; SDK failures are not retr
     await client.connect(new StdioClientTransport({command:process.execPath,args:[resolve('bin/vouch.mjs'),'--stdio'],stderr:'pipe',env:{
       PATH:process.env.PATH??'',HOME:process.env.HOME??'',TYPESAFE_API_KEY:'synthetic-api-key',TYPESAFE_BASE_URL:`http://127.0.0.1:${address.port}`,
       JEV_GUARD_PROJECT_ROOT:f.root,JEV_GUARD_MAX_CALLS:'10',JEV_GUARD_MAX_ESTIMATED_USD:'1',JEV_GUARD_ESTIMATE_PER_CALL_USD:'0.01',JEV_GUARD_BUDGET_LEDGER:join(f.root,'out/ledger.json'),VERIFY_OUTPUT_DIR:join(f.root,'out/reports') }}));
-    assert.equal((await client.listTools()).tools.length,7);
+    assert.equal((await client.listTools()).tools.length,8);
     for(const [name,args] of [['review_change',{base:'HEAD'}],['assess_pr',{base:'HEAD',title:'Threshold fix'}],['check_file',{file:'src/pricing.mjs'}]] as const){
       const result=await client.callTool({name,arguments:args});assert.equal(result.isError,false,JSON.stringify(result));assert.equal((result.structuredContent as Record<string,unknown>).status,'clean');
     }

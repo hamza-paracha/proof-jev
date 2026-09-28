@@ -35,7 +35,8 @@
     "review:build": "node scripts/build-review-package.mjs",
     "verify:review-install": "tsx scripts/verify-review-install.ts",
     "review:eval": "tsx scripts/evaluate-review.ts",
-    "showcase": "tsx scripts/showcase.ts"
+    "showcase": "tsx scripts/showcase.ts",
+    "verify:plugin": "tsx scripts/verify-plugin.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

@@ -1,11 +1,13 @@
 {
   "name": "proof-jev",
   "version": "0.4.0",
-  "description": "Jev-powered code review and browser decisions, backed by mutation tests and browser assertions. Evidence for coding agents through MCP and CLI.",
+  "description": "Review a change, find what the tests miss, and try the app in a real browser. Uses Jev for optional code review.",
   "author": {
     "name": "proof-jev contributors"
   },
   "license": "MIT",
   "skills": "./skills/",
-  "mcpServers": "./.mcp.json"
+  "mcpServers": "./.mcp.json",
+  "homepage": "https://github.com/hamza-paracha/proof-jev",
+  "repository": "https://github.com/hamza-paracha/proof-jev"
 }

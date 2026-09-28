@@ -2,15 +2,15 @@
   "name": "proof-jev",
   "version": "0.4.0",
   "license": "MIT",
-  "description": "Jev-powered code review and browser decisions, backed by mutation tests and browser assertions. Evidence for coding agents through MCP and CLI.",
+  "description": "Review a change, find what the tests miss, and try the app in a real browser. Uses Jev for optional code review.",
   "author": {
     "name": "proof-jev contributors"
   },
   "skills": "./skills/",
   "interface": {
-    "displayName": "proof-jev",
-    "shortDescription": "Jev-powered code review with executable evidence.",
-    "longDescription": "Review diffs with structured Jev judgments, challenge tests with bounded mutations, and verify browser workflows and persisted state. Local evidence, explicit uncertainty and operator-controlled model budgets.",
+    "displayName": "Proof-Jev",
+    "shortDescription": "Find what passing tests miss.",
+    "longDescription": "Check your changes before you ship. Review code with Jev, challenge your tests with small deliberate bugs, and verify local app behavior in a real browser. Open the report to see exactly what happened.",
     "developerName": "proof-jev contributors",
     "category": "Productivity",
     "capabilities": [
@@ -18,8 +18,13 @@
       "Write"
     ],
     "defaultPrompt": [
-      "Verify the local app changes and fix any reproduced failures."
+      "Check whether my tests would catch bugs in this change.",
+      "Review my changes and investigate anything risky.",
+      "Try my local app and check that it really saves.",
+      "Set up Proof-Jev for this project."
     ]
   },
-  "mcpServers": "./.mcp.json"
+  "mcpServers": "./.mcp.json",
+  "homepage": "https://github.com/hamza-paracha/proof-jev",
+  "repository": "https://github.com/hamza-paracha/proof-jev"
 }

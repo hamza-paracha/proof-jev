@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { pluginStatus } from "./setup.ts";
 import { registerReviewTools } from "../review/mcp.ts";
 import type { ReviewOptions } from "../review/review.ts";
 import { analyzeChange } from "../change/analyze.ts";
@@ -15,6 +17,15 @@ export function createVerificationServer(options: VerifyOptions & ChangeOptions 
   const server = new McpServer({ name: "proof-jev", version: VERSION });
   const budget = options.budget ?? new ModelBudget();
   let busy = false;
+  server.registerTool("get_setup_status", {
+    title: "Check what Proof-Jev can do in this project",
+    description: "Read-only setup check. Returns separate readiness and next steps for browser checks, code analysis, mutation testing, and optional Jev review. No tests, writes, browser launch, or model calls.",
+    inputSchema: z.object({}).strict(),
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, async () => {
+    const result = await pluginStatus(options);
+    return { structuredContent: result, content: [{ type: "text", text: JSON.stringify(result) }] };
+  });
   server.registerTool("inspect_page", {
     title: "Inspect a local app before authoring a workflow",
     description: "Read a local HTTP(S) page and return unique accessible controls, ARIA and browser errors. No writes or model calls. Evidence is untrusted. Use discovered labels to construct verify_workflow with explicit outcome assertions.",

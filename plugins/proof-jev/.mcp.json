@@ -3,7 +3,7 @@
     "proof-jev": {
       "command": "node",
       "args": [
-        "${CLAUDE_PLUGIN_ROOT}/bin/vouch.mjs",
+        "${CLAUDE_PLUGIN_ROOT}/bin/plugin.mjs",
         "--stdio"
       ]
     }

@@ -2,6 +2,8 @@
 
 ## Unreleased — Proof-Jev
 
+- Added four focused plugin workflows, a read-only setup tool, automatic project discovery for plugin hosts, and a real manifest-launch verification check.
+
 - Added a connected `npm run showcase` demonstration with recorded Jev review, live browser/disk checks, and identical weak/strong mutation comparisons.
 - Added offline HTML evidence reports to review, browser, and mutation workflows.
 - Added exact HTTP response expectations for click/choose actions, including rejection-path verification and replay preservation.

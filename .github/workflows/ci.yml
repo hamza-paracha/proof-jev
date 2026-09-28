@@ -44,4 +44,5 @@ jobs:
       - run: npm run review:build
       - run: npm run verify:review-install
       - run: npm run plugin:build
+      - run: npm run verify:plugin
       - run: node out/plugin/proof-jev/bin/vouch.mjs --doctor

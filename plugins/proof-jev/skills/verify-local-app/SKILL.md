@@ -1,9 +1,11 @@
 ---
 name: verify-local-app
-description: Review code changes with Jev and verify local app behavior with browser workflows and diff-aware mutation evidence using proof-jev. Use after implementation to reproduce failures, expose weak tests, and rerun focused assertions.
+description: Test a disposable local web app with Proof-Jev. Use to reproduce a browser bug, check that a form actually saves, verify rejected input, or rerun a workflow after a fix.
 ---
 
 Use the relevant evidence for the requested change: Jev provides advisory diff judgments, mutation analysis challenges tests, and browser workflows check application outcomes. None establishes whole-app correctness.
+
+Call `get_setup_status` first and confirm browser checks are available. Use the review-changes and check-tests skills for code-focused tasks.
 
 For browser behavior:
 
@@ -12,6 +14,8 @@ For browser behavior:
 3. Call `verify_workflow` with scoped steps and a final assertion. Prefer an independent `assertJson` read of persisted state alongside visible text. Restrict allowed write paths to the requested flow and set `confirmDisposable` only for disposable environments.
 4. Use `policy: rules` by default. Adaptive routing needs operator-configured budgets; do not raise budgets to force a pass. HTTPS validates upstream certificates by default. Use an operator CA or explicitly requested disposable self-signed setup. Named sessions must already be imported by the operator; tool calls cannot read arbitrary session files.
 5. On failure, inspect the evidence, fix the cause within the user's scope, reset application state and rerun the same assertions. Do not weaken assertions. `abstained` means unsupported or uncertain evidence, not necessarily an application defect.
+
+For rejected inputs, use `expectResponse` on click/choose with the exact method, path, and expected status (for example HTTP 400), then assert that no invalid state was saved. Never suppress unrelated errors.
 
 Browser steps: `goto`, `fill`, `click`, `choose`, `assertText`, `assertJson`, `assertUrl`, `assertSelector`, `assertAttribute`. Workflows must end with an assertion. Flows may span pages on the same origin. See [browser configuration and limits](../../docs/verification.md).
 
