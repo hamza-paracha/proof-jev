@@ -7,6 +7,7 @@ export const projectConfigSchema = z.object({
   testCommand: command,
   setupCommand: command.optional(),
   validationCommand: command.optional(),
+  acceptanceChecks: z.record(z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/), command).default({}),
   maxMutants: z.number().int().min(1).max(25).default(12),
   commandTimeoutMs: z.number().int().min(500).max(60_000).default(15_000),
   totalTimeoutMs: z.number().int().min(5000).max(600_000).default(180_000),

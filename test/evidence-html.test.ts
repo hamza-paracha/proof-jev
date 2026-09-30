@@ -37,3 +37,14 @@ it("renders untrusted evidence as text and restricts links to local artifacts", 
   assert.match(html, /href="mutations\/report.json"/);
   assert.match(html, /default-src 'none'/);
 });
+
+it("retains inspectable source evidence while omitting absent source sections", () => {
+  const source = 'if (total < 0) throw new Error("invalid");';
+  const html = renderEvidenceHtml({
+    eyebrow: "Mutation evidence", title: "Validation", summary: "A surviving change", status: "gaps_found", metrics: [], notes: [],
+    sections: [{ title: "Source", code: source }, { title: "Explanation", text: "Reject negative totals." }],
+  });
+  assert.match(html, /if \(total &lt; 0\) throw new Error\(&quot;invalid&quot;\);/);
+  assert.equal((html.match(/<details>/g) ?? []).length, 1);
+  assert.ok(!html.includes('<code>undefined</code>'));
+});

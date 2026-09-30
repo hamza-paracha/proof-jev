@@ -1,6 +1,6 @@
 # Code-aware change verification
 
-proof-jev can inspect an agent's diff and challenge the tests around it. This complements the browser verifier: the code pipeline identifies source changes and weak assertions; the browser pipeline checks observable application behavior.
+proof-jev can inspect an agent's diff and challenge the tests around it. The code pipeline identifies changed functions, affected tests, and weak assertions.
 
 It is an execution pipeline, with no model API calls:
 
@@ -87,7 +87,7 @@ The caller can choose a base commit, but cannot supply a filesystem root or arbi
 
 Ask your agent:
 
-> Analyze my diff, inspect the proposed mutations and affected tests, then run verify_change. For each surviving mutation, check the intended behavior, add a targeted regression test, and rerun the same base comparison. Do not weaken assertions or change expected behavior just to improve the result. Use verify_workflow for the affected browser flow too.
+> Analyze my diff, inspect the proposed mutations and affected tests, then run verify_change. For each surviving mutation, check the intended behavior, add a targeted regression test, and rerun the same base comparison. Do not weaken assertions or change expected behavior just to improve the result.
 
 ## Evidence and interpretation
 

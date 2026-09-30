@@ -12,7 +12,7 @@ import { getDiff, parseChunk } from '../src/review/diff.ts';
 import { fileRequest, fileQuestions, prQuestions, MAX_STATE_BYTES, type ReviewRequest } from '../src/review/questions.ts';
 import { decodeJudgment, type ReviewAdapter } from '../src/review/judge.ts';
 import { reviewCode } from '../src/review/review.ts';
-import { ModelBudget } from '../src/verify/routing.ts';
+import { ModelBudget } from '../src/verify/budget.ts';
 import { reviewOptionsFromEnv } from '../src/review/config.ts';
 import type { Questions } from '@typesafe-ai/sdk';
 
@@ -195,5 +195,43 @@ it('review reports expose Git locations as file evidence without claiming line-l
     const md=await readFile(report.artifacts.markdown,'utf8');assert.ok(md.includes('+3'));assert.ok(md.includes('−3 (base)'));assert.ok(md.includes('not diagnoses of individual lines'));
     assert.deepEqual(JSON.parse(await readFile(report.artifacts.report,'utf8')).files[0].evidence,evidence);
     assert.ok(!JSON.stringify(evidence).includes('total >= 50'));
+  } finally { await f.close(); }
+});
+
+it('rejects hunks that omit lines from only one side', () => {
+  for (const patch of [
+    '@@ -1,2 +1 @@\n-old\n+new\n',
+    '@@ -1 +1,2 @@\n-old\n+new\n',
+  ]) assert.throws(() => parseChunk('src/code.js', 'modified', patch));
+});
+
+it('ignores patch headers and format-patch trailers outside a completed hunk', () => {
+  const patch = '--- a/src/code.js\n+++ b/src/code.js\n@@ -1 +1 @@\n-old\n+new\n-- \n2.47.0\n';
+  const chunk = parseChunk('src/code.js', 'modified', patch);
+  assert.equal(chunk.additions, 'new');
+  assert.equal(chunk.deletions, 'old');
+  assert.equal(chunk.linesChanged, 2);
+  assert.deepEqual(chunk.hunks[0]!.added, [{ start: 1, end: 1 }]);
+});
+
+it('marks a patch incomplete only when it exceeds the documented 10 KB representation limit', () => {
+  const prefix = '@@ -0,0 +1 @@\n+';
+  for (const bytes of [9999, 10000, 10001]) {
+    const patch = prefix + 'a'.repeat(bytes - Buffer.byteLength(prefix) - 1) + '\n';
+    const chunk = parseChunk('src/code.js', 'added', patch);
+    assert.equal(Buffer.byteLength(patch), bytes);
+    assert.equal(chunk.truncated, bytes > 10000);
+    assert.equal(chunk.linesChanged, 1);
+  }
+});
+
+it('rejects a nested repository directory even when there are no changes to read', async () => {
+  const f = await changeFixture();
+  try {
+    // Commit the existing fixture change so an absent root check would falsely report a clean diff.
+    await f.git('add', '.');
+    await f.git('-c', 'user.name=Proof Test', '-c', 'user.email=proof@example.invalid', 'commit', '-qm', 'Current fixture');
+    await assert.rejects(getDiff(join(f.root, 'src'), 'HEAD'));
+    assert.equal((await getDiff(f.root, 'HEAD')).chunks.length, 0);
   } finally { await f.close(); }
 });

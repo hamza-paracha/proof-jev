@@ -4,7 +4,7 @@ import { parseChunk, reviewPath } from "./diff.ts";
 import { fileRequest } from "./questions.ts";
 import { decodeJudgment, type Judgment, type ReviewAdapter } from "./judge.ts";
 import { thresholdsSchema, type Thresholds } from "./schema.ts";
-import { ModelBudget, VerificationStop } from "../verify/routing.ts";
+import { ModelBudget, VerificationStop } from "../verify/budget.ts";
 
 const questionSchema = z.enum(["breaking_change", "needs_validation", "needs_error_handling"]);
 export const evaluationCasesSchema = z.array(z.object({

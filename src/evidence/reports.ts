@@ -1,7 +1,6 @@
 import { renderEvidenceHtml } from "./html.ts";
 import type { GuardReport } from "../review/review.ts";
 import type { ChangeReport } from "../change/report.ts";
-import type { VerificationReport } from "../verify/runtime.ts";
 
 export function reviewHtml(r: GuardReport) {
   return renderEvidenceHtml({
@@ -126,65 +125,11 @@ export function changeHtml(r: ChangeReport) {
           { label: "Markdown", href: "report.md" },
         ],
       },
+      ...(r.acceptance?.length ? [{ title: "Acceptance checks", table: {
+        headings: ["Configured check", "Outcomes"],
+        rows: r.acceptance.map(c => [c.name, c.runs.map(run => run.outcome).join(" · ")]),
+      } }] : []),
     ],
     notes: [...r.plan.gaps, ...r.limitations],
-  });
-}
-export function browserHtml(r: VerificationReport) {
-  return renderEvidenceHtml({
-    eyebrow: "Executable evidence / browser workflow",
-    title: "What happened\nafter the click?",
-    status: r.status,
-    summary: r.reason,
-    metrics: [
-      {
-        label: "Steps passed",
-        value: `${r.steps.filter((s) => s.status === "passed").length} / ${r.input.steps.length}`,
-      },
-      { label: "Model calls", value: String(r.cost.attemptedCalls) },
-      { label: "Blocked requests", value: String(r.blockedRequests.length) },
-      { label: "Duration", value: `${(r.durationMs / 1000).toFixed(1)}s` },
-    ],
-    sections: [
-      {
-        title: "Action and assertion evidence",
-        table: {
-          headings: ["Step", "Operation", "Result", "Observation"],
-          rows: r.steps.map((s) => [
-            String(s.index + 1),
-            s.action.kind,
-            s.status,
-            s.response
-              ? `${s.response.method} ${s.response.url} → ${s.response.status}${s.reason ? ` · ${s.reason}` : ""}`
-              : (s.reason ?? s.route),
-          ]),
-        },
-      },
-      {
-        title: "Observed signals",
-        table: {
-          headings: ["Step", "Category", "Signal"],
-          rows: r.findings.map((f) => [
-            String(f.step + 1),
-            f.category,
-            f.message,
-          ]),
-        },
-      },
-      {
-        title: "Replay this workflow",
-        text: `Runtime ${r.manifest.toolVersion}; fingerprint ${r.manifest.runtimeFingerprint}.`,
-        links: [
-          { label: "Full report JSON", href: "report.json" },
-          { label: "Workflow JSON", href: "workflow.json" },
-          { label: "Trace JSONL", href: "trace.jsonl" },
-        ],
-      },
-    ],
-    notes: [
-      "Only the configured assertions and origin were checked. Passing is not proof of whole-application correctness.",
-      "A read endpoint is only as authoritative as its implementation. Use an independent persisted-state check when possible.",
-      "Reports may contain local application data. Review before sharing.",
-    ],
   });
 }

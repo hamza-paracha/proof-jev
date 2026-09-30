@@ -4,7 +4,7 @@
 
 ## How I checked it
 
-<!-- Tests added or updated, commands run, a run against the demo app... -->
+<!-- Tests added or updated, commands run, a mutation run against real changes... -->
 
 - [ ] `npm run typecheck` and `npm test` pass
 - [ ] Safety rules unchanged, or the change is explained above (see CONTRIBUTING.md)

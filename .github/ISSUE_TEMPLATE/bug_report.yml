@@ -12,7 +12,7 @@ body:
     id: repro
     attributes:
       label: How to reproduce
-      description: The command or runner request (remove tokens and keys), and the target if it is public.
+      description: The command or MCP request, selected Git base, and a minimal repository diff. Remove tokens and private source.
       render: shell
     validations:
       required: true
@@ -26,4 +26,4 @@ body:
     id: version
     attributes:
       label: Version
-      description: Commit SHA or runner image tag, and Node version.
+      description: Commit SHA or package version, and Node version.

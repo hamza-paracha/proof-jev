@@ -11,7 +11,9 @@ try {
   await mkdir(join(output, "bin")); await mkdir(join(output, "src/verify"), { recursive: true });
   await cp(join(root, "src/evidence"), join(output, "src/evidence"), { recursive: true });
   await cp(join(root, "src/review"), join(output, "src/review"), { recursive: true });
-  for (const file of ["routing.ts", "ledger.ts", "redact.ts", "schema.ts"]) await cp(join(root, "src/verify", file), join(output, "src/verify", file));
+  await mkdir(join(output, "src/loop"), { recursive: true });
+  await cp(join(root, "src/loop/gate.ts"), join(output, "src/loop/gate.ts"));
+  for (const file of ["budget.ts", "ledger.ts", "redact.ts"]) await cp(join(root, "src/verify", file), join(output, "src/verify", file));
   await cp(join(root, "bin/guard.mjs"), join(output, "bin/guard.mjs")); await chmod(join(output, "bin/guard.mjs"), 0o755);
   await cp(join(root, "LICENSE"), join(output, "LICENSE"));
   await cp(join(root, "docs/structured-review.md"), join(output, "README.md"));

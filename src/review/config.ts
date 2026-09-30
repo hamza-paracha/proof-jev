@@ -1,6 +1,6 @@
 import { TypeSafeClient } from "@typesafe-ai/sdk";
 import { isAbsolute } from "node:path";
-import { ModelBudget } from "../verify/routing.ts";
+import { ModelBudget } from "../verify/budget.ts";
 import { jevReviewAdapter } from "./judge.ts";
 import { thresholdsSchema } from "./schema.ts";
 import type { ReviewOptions } from "./review.ts";

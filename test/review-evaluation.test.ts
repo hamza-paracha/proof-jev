@@ -3,7 +3,7 @@ import { it } from "node:test";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { evaluateReview, evaluationCasesSchema, evaluationRequest, evaluationSuiteHash } from "../src/review/evaluation.ts";
-import { ModelBudget } from "../src/verify/routing.ts";
+import { ModelBudget } from "../src/verify/budget.ts";
 import type { Questions } from "@typesafe-ai/sdk";
 
 const cases = evaluationCasesSchema.parse(JSON.parse(await readFile(new URL("../evals/review/cases.json", import.meta.url), "utf8")));

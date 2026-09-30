@@ -1,43 +1,49 @@
 # Proof-Jev plugin
 
-Ask it to **“check whether my tests would catch bugs in this change”**, **“review my changes”**, or **“try this form and check that it really saves.”** The plugin includes separate workflows for setup, review, test quality, and browser behavior.
+Ask it to **“check whether my tests would catch bugs in this change”** or **“review my changes.”** Proof-Jev targets source code through three workflows: setup, code review, and test quality.
 
 ## Build and check
 
 ```sh
 npm ci
-npx playwright install chromium
 npm run plugin:build
 npm run verify:plugin
 ```
 
-The complete local bundle is `out/plugin/proof-jev`. It includes the runtime, locked production dependencies, docs, four skills, and Codex/Claude Code manifests. It is a current-platform bundle; rebuild on another OS/architecture. The source manifest in `plugins/proof-jev` alone is not an installable runtime.
+The bundle is `out/plugin/proof-jev`. It includes eight MCP tools, three skills, code-analysis and mutation runtimes, optional Jev review, and locked production dependencies. Chromium and Playwright are not required or bundled. Rebuild on another OS/architecture.
 
-For Codex, add the built directory through your local plugin marketplace, then enable Proof-Jev. For Claude Code, try the local bundle:
+For Codex, add the built directory through your local plugin marketplace and enable Proof-Jev. For Claude Code:
 
 ```sh
 claude --plugin-dir /absolute/path/to/proof-jev/out/plugin/proof-jev
 ```
 
-Start the host in the application repository. The plugin's dedicated launcher uses that working directory to discover the Git root, unless `VOUCH_PROJECT_ROOT` is explicitly configured. It refuses to infer the plugin's own directory as the application. Hosts that start MCP elsewhere need an explicit project path in their MCP environment. Restart the server after environment changes.
+Start the host in the application repository. Codex launches the server from the plugin directory using `.mcp.codex.json`; the prompt hook supplies the repository's working directory. The Claude-compatible launcher in `.mcp.json` discovers the Git root from the host working directory. Both honor an explicitly configured `VOUCH_PROJECT_ROOT` and refuse to treat the plugin directory as the application. Restart the server after environment changes.
+
+## Automatic checks in Codex
+
+The plugin includes prompt, post-edit, completion, and interrupt hooks. Open `/hooks` in a local Codex session to review and trust the Proof-Jev definitions, then start a fresh session in your Git repository. Codex deliberately skips new or changed hooks until trusted. No custom adapter is needed for supported local Codex sessions.
+
+Analysis runs automatically after edits. Tests require the repository configuration and execution permission below; Jev review remains opt-in. Completion returns actionable findings for at most one repair continuation, then reports any unresolved verification. Chat-only turns do not run tests. See [the full lifecycle and limits](task-loop.md).
 
 ## First conversation
 
-Ask **“Set up Proof-Jev for this project.”** The agent calls `get_setup_status`, which reports readiness and the next step for each capability:
+Ask **“Set up Proof-Jev for this project.”** `get_setup_status` reports readiness and the next step for each capability:
 
 | Capability | What it needs |
 | --- | --- |
-| Browser checks | Playwright Chromium and a disposable loopback app |
 | Code analysis | A configured or discovered Git repository |
-| Mutation testing | Project config with a real test command, operator `VOUCH_ALLOW_EXECUTION=1`, and per-call execution confirmation |
+| Mutation testing | `vouch.config.json` with a real test command, `VOUCH_ALLOW_EXECUTION=1`, and per-call execution confirmation |
 | Jev review | Project, provider credentials, and an explicitly configured persistent budget |
 
-A missing Jev key does not prevent local checks. Setup never executes project code, starts the browser, makes a model call, writes configuration, or exposes API keys.
+Setup makes no model calls and does not execute tests. Code analysis and mutation testing need no model key. For mutation setup, use the project's existing test command; see [execution configuration](code-verification.md). For paid review, see [Jev setup](structured-review.md).
 
-For mutation setup, the agent reads the project's existing scripts and proposes the actual test command in `vouch.config.json`. It does not guess an arbitrary command. See [execution configuration](code-verification.md). For paid review, see [Jev setup](structured-review.md).
+## Evidence
 
-## What you get back
+Reports include source locations, exact mutation patches, command outcomes, and a standalone HTML view. Investigate surviving mutations against the requirements before changing tests. Code-review judgments remain advisory.
 
-A useful result starts with the bug or behavior checked and links the evidence. Reports include exact mutation patches, browser actions, observed HTTP responses, and a standalone HTML view. Expected input rejections such as HTTP 400 can be asserted explicitly. Surviving mutants need investigation; they are not automatically confirmed product defects.
+## Upgrade from Vouch or earlier Proof-Jev
 
-The plugin provides eight MCP tools, including the read-only setup check. The standalone Guard package remains a separate three-tool review server. Changes to installed skills/tools require a fresh host session to take effect.
+Install and enable only `proof-jev`. If the old Vouch plugin is installed in Codex, run `codex plugin remove vouch@personal` (replace `personal` with your marketplace name) and remove its catalog entry. Existing CLI aliases, environment variables, and `vouch.config.json` remain supported.
+
+Version 0.7 adds automatic `task_hook` callbacks alongside `task_event` for the [portable task loop](task-loop.md), alongside `get_setup_status`, `analyze_change`, `verify_change`, `review_change`, `assess_pr`, and `check_file`. The browser tools and local-app skill have been removed. Refresh the installed plugin and start a fresh host session to load the new tool list.

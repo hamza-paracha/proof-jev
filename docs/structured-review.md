@@ -2,7 +2,7 @@
 
 proof-jev Guard reviews a Git diff using Jev's `noul`, `choice` and `score` primitives. Each changed file gets one model request containing eight questions: breaking behavior, risk, change type, missing tests, error handling, input validation, side effects and merge readiness. A PR assessment adds four questions about scope, splitting, security relevance and urgency.
 
-This is an advisory review layer. It does not run project code, execute browser workflows or merge changes. The full proof-jev package also provides browser and mutation verification; the standalone Guard package runs without Playwright, Chromium or the AST parser.
+This is an advisory review layer. It does not execute project code or merge changes. The full Proof-Jev package also provides diff analysis and mutation verification; the standalone Guard package contains only the review tools.
 
 ## Install and connect
 
@@ -42,7 +42,7 @@ codex mcp add proof-jev-guard -- node /absolute/path/to/vouch/bin/guard.mjs --st
 claude mcp add --transport stdio proof-jev-guard -- node /absolute/path/to/vouch/bin/guard.mjs --stdio
 ```
 
-Make the environment above available to the registered server, using your client's MCP environment configuration or the launching environment. Restart the client task/session after changing its configuration. The full `bin/vouch.mjs --stdio` server exposes these same three tools alongside proof-jev's four existing tools.
+Make the environment above available to the registered server, using your client's MCP environment configuration or the launching environment. Restart the client task/session after changing its configuration. The `bin/vouch.mjs --stdio` server exposes these three review tools alongside `get_setup_status`, `analyze_change`, and `verify_change`.
 
 ## Tools and CLI
 
@@ -64,7 +64,7 @@ The full proof-jev CLI supports the same commands. `--focus path` can be repeate
 
 Ask your coding agent:
 
-> Review my diff with review_change. Investigate flags against the source and requirements, report uncertain judgments, and use the existing tests and proof-jev's browser/mutation tools to validate fixes. A model's merge-readiness answer is not permission to merge.
+> Review my diff with review_change. Investigate flags against the source and requirements, report uncertain judgments, and use the existing tests and Proof-Jev's mutation tools to validate fixes. A model's merge-readiness answer is not permission to merge.
 
 ## Verdicts and confidence
 

@@ -1,10 +1,10 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { reviewChangeSchema, assessPrSchema, checkFileSchema } from "./schema.ts";
 import { reviewCode, type ReviewOptions } from "./review.ts";
+import { RunGate } from "../loop/gate.ts";
 import { redact } from "../verify/redact.ts";
 
-export function registerReviewTools(server: McpServer, options: ReviewOptions) {
-  let busy = false;
+export function registerReviewTools(server: McpServer, options: ReviewOptions, gate = new RunGate()) {
   const definitions = [
     { name: "review_change", title: "Review a code diff with Jev", inputSchema: reviewChangeSchema, description: "Review changed files with Jev's structured questions about risk, breaking changes, tests, validation and error handling. Requires operator-configured project, provider and persistent budget. Sends scrubbed diff context to the model, never executes project code. Returns probabilities and advisory confidence bands, not a proof of correctness or merge authorization." },
     { name: "assess_pr", title: "Assess a pull request's scope and risks", inputSchema: assessPrSchema, description: "Review a branch diff per file and assess overall scope, split recommendations, security relevance and review urgency. One model request per file plus one summary request, within operator limits. No GitHub writes, code execution or automatic merging. Incomplete and uncertain evidence is explicit." },
@@ -13,15 +13,15 @@ export function registerReviewTools(server: McpServer, options: ReviewOptions) {
   for (const definition of definitions) {
     server.registerTool(definition.name, { title: definition.title, description: definition.description, inputSchema: definition.inputSchema,
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true } }, async (input: unknown, extra: { signal: AbortSignal }) => {
-      if (busy) return { isError: true, content: [{ type: "text" as const, text: "A code review is already running." }] };
-      busy = true;
+      if (gate.busy) return { isError: true, content: [{ type: "text" as const, text: "A code review is already running." }] };
+      gate.busy = true;
       try {
         const signal = options.signal ? AbortSignal.any([options.signal, extra.signal]) : extra.signal;
         const report = await reviewCode(definition.name, input, { ...options, signal });
         return { isError: report.status !== "clean", structuredContent: { ...report }, content: [{ type: "text" as const, text: JSON.stringify(report) }] };
       } catch (error) {
         return { isError: true, content: [{ type: "text" as const, text: redact(error instanceof Error ? error.message : "Code review failed") }] };
-      } finally { busy = false; }
+      } finally { gate.busy = false; }
     });
   }
 }

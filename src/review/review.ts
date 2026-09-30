@@ -6,7 +6,7 @@ import { getDiff, type DiffHunk } from "./diff.ts";
 import { fileRequest, prRequest, type ReviewRequest } from "./questions.ts";
 import { decodeJudgment, type Judgment, type ReviewAdapter } from "./judge.ts";
 import { reviewChangeSchema, assessPrSchema, checkFileSchema, thresholdsSchema, type ReviewAction, type Thresholds } from "./schema.ts";
-import { ModelBudget, VerificationStop } from "../verify/routing.ts";
+import { ModelBudget, VerificationStop } from "../verify/budget.ts";
 import { redact } from "../verify/redact.ts";
 
 export interface ReviewOptions {
@@ -55,7 +55,7 @@ export async function reviewCode(action: ReviewAction, raw: unknown, options: Re
   const report: GuardReport = { schemaVersion: 1, runId, action, status: "error", summary: "Review did not complete", base: diff.base, snapshotHash: diff.snapshotHash, durationMs: 0,
     files: [], totals: { filesChanged: diff.totalFiles, filesReviewed: 0, highConfidenceFlags: 0, mediumConfidenceWarnings: 0, lowConfidenceUncertain: 0 },
     incomplete: diff.truncated, skipped: diff.skipped,
-    limitations: ["Model judgments are advisory; no code, tests or browser workflows were executed.", "Confidence bands are not calibrated on this repository and do not authorize automatic merging.", "Changed-line evidence comes from Git. Model judgments cover a whole file and are not diagnoses of individual lines.", "Missing callers, tests or truncated context can hide defects. Secret scrubbing is not a comprehensive scanner.", "Latency is measured per run, not guaranteed; token cost is an estimate, not a provider invoice."],
+    limitations: ["Model judgments are advisory; no project code or tests were executed.", "Confidence bands are not calibrated on this repository and do not authorize automatic merging.", "Changed-line evidence comes from Git. Model judgments cover a whole file and are not diagnoses of individual lines.", "Missing callers, tests or truncated context can hide defects. Secret scrubbing is not a comprehensive scanner.", "Latency is measured per run, not guaranteed; token cost is an estimate, not a provider invoice."],
     cost: { totalCalls: 0, totalInputTokens: 0, totalOutputTokens: 0, totalEstimatedUsd: 0, reservedEstimatedUsd: 0, inputPricePerMillion: price, providerReportedCostUsd: null },
     artifacts: { report: join(directory, "report.json"), markdown: join(directory, "report.md"), html: join(directory, "report.html") } };
   const budget = options.budget ?? new ModelBudget();
@@ -82,7 +82,7 @@ export async function reviewCode(action: ReviewAction, raw: unknown, options: Re
     }
     item.durationMs = Date.now() - start; return item;
   };
-  const jobs = diff.chunks.map(chunk => ({ file: chunk.file, request: fileRequest(chunk), evidence: { scope: "file" as const, diffHash: chunk.hash, ...(chunk.previousFile ? { previousFile: chunk.previousFile } : {}), hunks: chunk.hunks } }));
+  const jobs = diff.chunks.map(chunk => ({ file: chunk.file, request: fileRequest(chunk, "task" in input ? input.task : undefined), evidence: { scope: "file" as const, diffHash: chunk.hash, ...(chunk.previousFile ? { previousFile: chunk.previousFile } : {}), hunks: chunk.hunks } }));
   let next = 0; const results: FileJudgment[] = new Array(jobs.length);
   await Promise.all(Array.from({ length: Math.min(concurrency, jobs.length) }, async () => {
     while (next < jobs.length) { const index = next++; const job = jobs[index]!; results[index] = { ...await judge(job.file, job.request), evidence: job.evidence }; }

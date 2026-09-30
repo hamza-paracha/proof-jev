@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "version": "0.7.1",
+  "host": { "name": "Codex CLI", "version": "0.159.1" },
+  "installedEngine": {
+    "transport": "stdio MCP using the installed plugin bundle",
+    "projectBound": true,
+    "unchangedTurnSkipped": true,
+    "weakTests": { "candidates": 1, "tested": 1, "detected": 0, "survived": 1, "untested": 0 },
+    "strongTests": { "candidates": 1, "tested": 1, "detected": 1, "survived": 0, "untested": 0 },
+    "identicalMutationIds": true,
+    "postEditAnalysis": true,
+    "deliberateBugBlocked": true,
+    "originalTaskPreserved": true,
+    "repairPassed": true,
+    "staleEvidenceInvalidated": true,
+    "interruptCancelled": true
+  },
+  "nativeHost": {
+    "provider": "local HTTP server with deterministic scripted responses",
+    "executionPermission": "explicit MCP environment for the disposable fixture only",
+    "exitCode": 0,
+    "sourceChangedByHostTool": true,
+    "automaticPromptCapture": true,
+    "automaticPostEditAnalysis": true,
+    "automaticCompletionTest": "baseline_failed",
+    "failureReachedNextModelRequest": true,
+    "localProviderRequests": 3,
+    "repairContinuations": 1,
+    "manualProofToolCallsByScriptedAgent": 0
+  },
+  "paidModelCalls": 0,
+  "limitations": [
+    "Synthetic disposable shipping fixture, not an independent real-project benchmark.",
+    "Scripted provider responses do not measure autonomous model judgment or repair quality.",
+    "Successful repair and interrupt cancellation were exercised over MCP, not through native Codex events.",
+    "Hook trust and repository execution configuration are required; host errors can skip verification.",
+    "One sampled mutation demonstrates the boundary assertion; it does not establish whole-program correctness."
+  ]
+}

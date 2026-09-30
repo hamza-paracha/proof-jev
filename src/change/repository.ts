@@ -8,7 +8,7 @@ import type { ChangedFile } from "./schema.ts";
 const exec = promisify(execFile);
 export const codeFile = /\.(?:[cm]?[jt]sx?)$/i;
 export const testFile = /(?:^|\/)(?:__tests__\/.*|[^/]+\.(?:test|spec))\.[cm]?[jt]sx?$/i;
-// Never stage credentials, browser evidence, dependencies or Vouch's generated reports.
+// Never stage credentials, dependencies or generated reports.
 const excluded = /(?:^|\/)(?:\.git|node_modules|out|auth|runner-data|coverage|dist|build|\.next|\.venv|\.ssh|\.aws)(?:\/|$)|(?:^|\/)(?:\.env(?:\..*)?|\.npmrc|\.pypirc|.*\.(?:pem|key|p12|pfx)|HANDOFF\.md)$/i;
 export function allowedSnapshotPath(path: string) {
   return !isAbsolute(path) && !path.split(/[\\/]/).includes("..") && !excluded.test(path);

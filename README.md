@@ -1,231 +1,121 @@
-<h1 align="center">Proof-Jev</h1>
-<p align="center"><strong>Code review powered by Jev. Verified with evidence.</strong></p>
-<p align="center">An open-source project using <strong>Jev</strong> for structured code review.<br>Find risky changes, challenge weak tests, and verify what your app actually does.</p>
+# Proof-Jev
 
-<p align="center">
-  <a href="https://github.com/hamza-paracha/proof-jev/actions/workflows/ci.yml"><img src="https://github.com/hamza-paracha/proof-jev/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-d6f675?labelColor=171a16" alt="MIT license"></a>
-  <a href="https://github.com/hamza-paracha/proof-jev/releases"><img src="https://img.shields.io/badge/status-alpha-d6f675?labelColor=171a16" alt="Alpha"></a>
-  <img src="https://img.shields.io/badge/models-off_by_default-d6f675?labelColor=171a16" alt="Models off by default">
-</p>
+**Find bugs inside code changes and expose tests that miss them.**
 
-<p align="center">
-  <a href="#try-it-in-two-minutes">Quickstart</a> ·
-  <a href="docs/verification.md">Documentation</a> ·
-  <a href="docs/validation.md">Validation</a> ·
-  <a href="https://github.com/hamza-paracha/proof-jev/releases">Releases</a> ·
-  <a href="CONTRIBUTING.md">Contribute</a>
-</p>
+Proof-Jev reads your Git diff, traces changed JavaScript/TypeScript functions to affected tests, and challenges those tests with deliberate faults. Optional Jev review adds structured judgments about validation, error handling, side effects, and missing tests.
 
-## Green tests. Bad order.
+The plugin and CLI focus on source code. They have no browser tools, Playwright dependency, or running-app requirement. Models are off by default.
 
-A negative-quantity order reaches disk while the example's test passes. Proof-Jev connects a Jev review of the missing validation to a real browser reproduction and mutation evidence that explains what the tests missed.
+## Run alongside your coding agent
+
+The task loop captures the original request, checks edits, and returns evidence before the host declares completion. Use the `task_event` MCP tool, a JSON Lines sidecar, or the included Node harness adapter:
 
 ```sh
-npm run showcase
+node bin/vouch.mjs loop --project /path/to/repo --watch --allow-exec
 ```
 
-| Evidence from the connected demo | Result |
-| --- | --- |
-| Ordinary test against the seeded bug | Passes |
-| Browser submits quantity `−1` | Fails the expected rejection; invalid order is saved |
-| Same three mutations, weak → stronger tests | 3 surviving → 0 surviving |
-| Repaired app, identical browser workflow | HTTP 400; no order persisted; passes |
+In local Codex sessions, bundled hooks forward the prompt, edit checkpoints, and completion request after the user trusts them through `/hooks`. They feed findings back and can request one repair continuation before reporting unresolved verification. Other harnesses can forward the same lifecycle events through the portable adapter and decide how to handle its completion verdict. Named acceptance checks link test evidence to requirements; missing or stale evidence stays unverified. The watcher never runs tests automatically, jobs run one at a time, and final mutation checks default to three candidates. Jev review can compare the diff with the original request when explicitly enabled.
 
-Open the generated offline HTML report to inspect the source pair, exact patches, browser traces, and independent disk reads. **Jev's review is a real recorded response; browser and mutation checks execute on every run.** No API key needed. The bug is seeded and the repair is scripted; this is a reproducible example, not an autonomous-repair or general-accuracy claim.
+[Harness integration, protocol, and resource limits](docs/task-loop.md). The plugin bundles Codex hooks; Codex requires review and trust before running them.
 
-[How the showcase works →](docs/showcase.md) · [Install first →](#try-it-in-two-minutes)
+## Start with passing tests. Find what they miss.
 
-## Review the diff with structured Jev judgments
+A shipping function changes its free-shipping threshold from `> 50` to `>= 50`. Tests at 20 and 80 still pass, but never check 50 or invalid inputs.
 
-proof-jev exposes `review_change`, `assess_pr`, and `check_file`. Jev evaluates each changed file for breaking behavior, risk, missing tests, error handling, input validation, side effects and merge readiness. Reports preserve probabilities, warnings, uncertainty and incomplete context. These judgments complement executable browser and mutation evidence.
+Proof-Jev makes small changes in disposable copies and runs the configured tests:
 
-Use the standalone `proof-jev-guard` entry point for code review without Chromium, or all eight tools through the proof-jev MCP server. Paid review requires explicit provider and persistent-budget configuration. A ten-file synthetic review measured **638 ms** in a real-provider check; this is a smoke measurement, not an accuracy claim or latency guarantee.
+| Deliberate fault | Weak tests | Tests with boundary and error assertions |
+| --- | --- | --- |
+| Change `>= 50` back to `> 50` | Missed | Caught |
+| Reject zero as an invalid total | Missed | Caught |
+| Remove negative-total validation | Missed | Caught |
 
-[Setup, verdict semantics and examples →](docs/structured-review.md)
-
-### Measure the review
-
-The project includes eight labelled bug/control cases, backed by executable contract checks. A recorded Jev run identified four regressions and rejected four clean controls. This small synthetic baseline is reproducible; it is not a general accuracy or calibration claim.
+Every surviving fault comes with its exact patch, source location, command results, and a test suggestion to investigate against the intended behavior.
 
 ```sh
-# Replay real recorded answers, with no API calls
-npm run review:eval -- --responses evals/review/recorded-jev-1.13.0.json
-```
-
-The report shows detection precision/recall, false alarms, uncertainty, coverage, and probability error. [Evaluation guide →](docs/review-evaluation.md)
-
-## A success toast is only half the story
-
-Your agent edits a form. The browser says **“Saved.”** But did the server persist the change?
-
-proof-jev runs the interaction and checks the outcome through explicit assertions. A separate read of application state can catch a missing write even when the interface reports success. The agent gets the failing assertion, action history, and a replayable workflow to investigate, fix, and verify again.
-
-```text
-Browser interaction         Independent state check        Result
-───────────────────         ───────────────────────        ──────
-Fill name → Save → “Saved”   GET profile → “Original”        FAIL
-Fix the persistence write
-Fill name → Save → “Saved”   GET profile → “Ada Lovelace”    PASS
-```
-
-This is the regression we reproduced and repaired through the installed MCP runtime. [Read the measured evidence →](docs/validation.md#source-level-reproduce--fix--verify)
-
-## Challenge the tests behind the change
-
-A green test suite can still miss the bug. proof-jev now reads your Git diff, identifies changed JavaScript/TypeScript functions and affected tests, then introduces small deliberate faults in disposable copies: an off-by-one boundary, a missing validation guard, a reversed condition.
-
-If the tests still pass, proof-jev returns the exact surviving patch and a focused regression-test suggestion. Baselines run twice, failing mutants are repeated, and the original checkout stays untouched by the mutation engine. No model API call is required.
-
-```sh
+npm ci
 npm run verify:change-demo
 ```
 
-The demo starts with passing but weak tests, finds surviving mutations, adds explicit boundary/error assertions, and verifies that those tests now detect the same mutations. It demonstrates test sensitivity, not automatic proof of correctness.
+The demo creates a disposable repository and checks the same three mutations before and after adding explicit assertions. It needs Node.js 22+, npm, and Git. No API key is needed.
 
-Use `proof-jev analyze --project /path/to/repo --base HEAD` for read-only analysis. Execution requires a project configuration and `--allow-exec`. [Code-aware verification →](docs/code-verification.md) · [Implementation roadmap →](docs/roadmap.md)
-
-## Where it helps
-
-| When you need to… | proof-jev provides… |
-| --- | --- |
-| Review a code change with Jev | File-level judgments for risk, missing tests and merge readiness, with probabilities and uncertainty |
-| Find tests that miss a changed behavior | Diff-aware mutation runs with exact surviving patches |
-| Check an agent’s local app change | Real Chromium interactions followed by explicit assertions |
-| Reproduce a misleading success message | A separate same-origin JSON read to check the expected state |
-| Give an agent enough context to fix a failure | Offline HTML and structured reports, failing observations, action records, and a replay file |
-| Verify invalid-input handling | Exact HTTP response expectations plus independent state assertions |
-| Connect verification to your coding workflow | Eight MCP tools, a CLI, and local plugin bundles for Codex and Claude Code |
-| Handle a control label that differs from the intent | Optional Jev selection, with an explicitly enabled stronger-model fallback |
-| Keep routine verification predictable | Models off by default, origin/write restrictions, deadlines, and persistent paid-call limits |
-
-## Try it in two minutes
-
-Requires **Node.js 22+**, npm, Git for code analysis, and Playwright Chromium for browser workflows. The browser demo below needs no API key or model service. Jev code review requires a TypeSafe API key and explicit model budgets; follow the [review setup](docs/structured-review.md#install-and-connect).
+## Check your repository
 
 ```sh
-git clone https://github.com/hamza-paracha/proof-jev.git
-cd proof-jev
-npm ci
-npx playwright install chromium
-npm run verify -- --doctor
-npm run showcase
+# Read the diff, identify affected tests, and propose mutations
+node bin/vouch.mjs analyze --project /path/to/repo --base HEAD
 ```
 
-On Linux, use `npx playwright install --with-deps chromium` to install browser system dependencies too.
+`HEAD` includes staged, unstaged, and untracked changes. To check committed work, select the commit before the change.
 
-The showcase creates a disposable order application and Git repository, runs the checks, then cleans them up. It prints the path to `index.html` and exits successfully only when the expected before/after outcomes are observed. [Expected results and limits →](docs/showcase.md)
-
-For the smaller false-success-toast demonstration, use `npm run verify:demo`. The separate `npm run verify:example` checks a disk-backed profile application through MCP.
-
-The product and package are named `proof-jev`; the source repository is `hamza-paracha/proof-jev`. After `npm link`, use `proof-jev` or `proof-jev-guard`. Existing `vouch-jev`, `vouch-jev-guard`, `vouch` and `vouch-guard` commands, `vouch.config.json`, and environment variables remain supported.
-
-## Use the plugin
-
-Build the local Codex / Claude Code plugin with `npm run plugin:build`. It includes four workflows:
-
-- **Set up Proof-Jev** — see what's ready and fix missing configuration.
-- **Review changes** — investigate Jev findings against the actual code.
-- **Check tests** — find deliberate faults that your tests miss.
-- **Verify local app** — try the browser flow and check what got saved.
-
-The launcher detects the Git project opened by your host. `get_setup_status` reports each capability separately, with actionable setup steps. Browser checks and code analysis need no model key; mutation execution and paid review remain explicitly configured.
-
-[Plugin installation and first run →](docs/plugin.md)
-
-## Use it from your coding agent
-
-Register the stdio server using the **absolute path** to your checkout:
-
-```sh
-# Codex
-codex mcp add proof-jev -- node /absolute/path/to/vouch/bin/vouch.mjs --stdio
-
-# Claude Code — run from your application project
-claude mcp add --transport stdio proof-jev -- node /absolute/path/to/vouch/bin/vouch.mjs --stdio
-```
-
-Start a new task/session, then ask:
-
-> Use proof-jev to inspect my disposable local app at http://127.0.0.1:3000. Verify the profile-saving flow, including the persisted display name through the app’s read endpoint. Read the evidence, fix any reproduced failure, and rerun the same assertions. Keep paid models disabled.
-
-| Tool | Purpose |
-| --- | --- |
-| `review_change` | Jev review of changed files with structured verdicts and uncertainty |
-| `assess_pr` | File-level review plus PR scope, split, security and urgency assessment |
-| `check_file` | One changed file, one bounded model request |
-| `analyze_change` | Inspect the configured repository diff, affected tests and mutation candidates |
-| `verify_change` | Execute configured tests and challenge them with bounded mutations in disposable copies |
-| `inspect_page` | Discover accessible controls without allowing HTTP writes or calling models |
-| `verify_workflow` | Run a bounded workflow and return status, assertions, routing, and evidence paths |
-
-For the bundled workflow skill and native plugin manifests, use `npm run plugin:build`. [Client setup and local plugin installation →](docs/verification.md#native-plugin-and-installation-checks)
-
-## Describe the outcome, then verify it
-
-Workflows are small JSON files. This example matches the included profile app; change its URL and assertions to match your own application.
+For mutation execution, add `vouch.config.json` to the target repository using its actual test command:
 
 ```json
 {
-  "url": "http://127.0.0.1:4178/settings",
-  "policy": "rules",
-  "confirmDisposable": true,
-  "allowedWritePaths": ["/api/profile"],
-  "steps": [
-    { "kind": "fill", "target": { "role": "textbox", "name": "Display name" }, "value": "Ada Lovelace" },
-    { "kind": "choose", "intent": "Save profile" },
-    { "kind": "assertText", "text": "Profile saved" },
-    { "kind": "assertJson", "path": "/api/profile", "field": ["displayName"], "equals": "Ada Lovelace" }
-  ]
+  "testCommand": ["npm", "test"],
+  "maxMutants": 8,
+  "commandTimeoutMs": 15000,
+  "totalTimeoutMs": 180000
 }
 ```
 
-To run this exact example, start `node examples/profile-app/server.mjs` in another terminal, save the JSON as `workflow.json`, then run:
+```sh
+node bin/vouch.mjs verify-change --project /path/to/repo --base HEAD --allow-exec
+```
+
+Tests run against disposable snapshots. Baselines must pass, detected mutations are rerun, and reports distinguish surviving, detected, invalid, inconclusive, and untested candidates. [Configuration and limits](docs/code-verification.md).
+
+## Use the plugin
 
 ```sh
-npm run verify -- ./workflow.json
+npm run plugin:build
+npm run verify:plugin
 ```
 
-`assertJson` makes an independent GET using the browser context’s cookies. Its evidence is only as authoritative as that endpoint: a cached or optimistic read does not prove durable storage. The example app reads its persisted file.
+Install `out/plugin/proof-jev` through your local Codex marketplace, or load it with Claude Code:
 
-## How it works
-
-```mermaid
-flowchart LR
-  A[Workflow] --> B[Inspect controls]
-  B --> C{Exact match?}
-  C -->|Yes| D[Execute permitted action]
-  C -->|No · adaptive enabled| E[Jev · optional stronger model]
-  C -->|No · rules only| H[Abstain + evidence]
-  E -->|Valid bounded selection| D
-  E -->|Uncertain or unavailable| H
-  D --> F[Independent assertions]
-  F --> G[Report + trace + replay]
+```sh
+claude --plugin-dir /absolute/path/to/proof-jev/out/plugin/proof-jev
 ```
 
-Models can propose a control; they do not decide whether an assertion passed. Paid routing requires both an adaptive workflow and operator-configured limits. Reservations are persisted before calls, shared across the two model tiers, and retained after timeouts or failures. A configured dollar reservation is an estimate, not a guaranteed provider billing cap. [Routing and spending details →](docs/verification.md#routing-and-spending)
+Open the application repository before starting the host. The plugin discovers its Git root and provides three workflows: **set up Proof-Jev**, **review changes**, and **check tests**.
 
-Each browser run saves three local artifacts:
+> Check whether my tests would catch bugs in this change. Inspect the diff, investigate surviving mutations against the requirements, and add focused regression tests for real gaps.
 
-| Artifact | What you get |
+[Plugin setup and migration](docs/plugin.md).
+
+| Tool | Purpose |
 | --- | --- |
-| `report.json` | Outcome, assertion results, findings, model usage, limits, and source fingerprint |
-| `trace.jsonl` | Structured actions and bounded accessibility observations |
-| `workflow.json` | Replay input with completed choices frozen and models disabled |
+| `get_setup_status` | Check project, mutation execution, and optional Jev review readiness |
+| `analyze_change` | Identify changed functions, affected tests, and candidate faults |
+| `verify_change` | Run configured tests against bounded mutations and return exact evidence |
+| `review_change` | Review changed files with Jev |
+| `check_file` | Review one changed file |
+| `assess_pr` | Review local changes and assess their overall scope |
+| `task_event` | Track a task, check edit checkpoints, and gate completion on current evidence |
+| `task_hook` | Receive automatic Codex lifecycle events and return host-native feedback |
 
-The CLI exits `0` on a pass, `1` on a non-passing run, and `2` on invalid input or startup failure. Replays require the same initial application state. The trace is structured JSON, not a video or Playwright trace ZIP.
+To register the server directly, configure `VOUCH_PROJECT_ROOT` for the target repository and use `node /absolute/path/to/proof-jev/bin/vouch.mjs --stdio`. Mutation execution also requires `VOUCH_ALLOW_EXECUTION=1` and a valid test configuration.
 
-## Tested, with clear boundaries
+## Optional Jev review
 
-**This is an alpha for controlled local HTTP(S) applications and trusted JavaScript/TypeScript repositories.** It supports literal loopback addresses with an explicit port, exact-origin requests, and explicitly allowed write paths. Use disposable data and a production preview for apps whose development servers require HMR sockets.
+Jev reviews diffs for breaking behavior, risk, validation, error handling, side effects, and missing tests. Its findings include uncertainty and source evidence for an agent to investigate. Provider access and persistent budgets must be explicitly configured. [Review setup and semantics](docs/structured-review.md).
 
-- **Code verification:** the controlled demo exposes three surviving mutations, then detects all three after targeted boundary and error assertions are added.
-- **Automated:** routing, assertions, network/write restrictions, redirects, cancellation, persistent budgets, redaction, and real MCP transport; plus clean-package installation checks.
-- **Live Jev smoke:** three requests covering semantic selection, a false-success regression, and abstention. This establishes those cases, not general accuracy.
-- **Actual repair:** reproduced a missing persistence write through the installed runtime, fixed the source, and confirmed the result with an independent disk read.
-- **Clients:** Codex plugin installation and Claude Code plugin/MCP loading checked locally.
+The included evaluation replays recorded responses for eight labelled synthetic cases without provider calls:
 
-HTTPS and named cookie/localStorage sessions are supported. Remote targets, cross-origin login flows, WebSocket-dependent flows, popups, and visual assertions remain unsupported. OpenRouter escalation is tested with simulated responses only. A passing workflow covers its explicit assertions and observed browser checks; it does not certify an entire application. [Full results and limitations →](docs/validation.md)
+```sh
+npm run review:eval -- --responses evals/review/recorded-jev-1.13.0.json
+```
+
+This small evaluation does not establish accuracy on real repositories. [Evaluation method](docs/review-evaluation.md).
+
+## Scope
+
+Mutation analysis supports JavaScript/TypeScript and statically resolvable local imports. Alias-heavy frameworks, dynamic loading, and other languages require additional work. A surviving mutation is a question to investigate: it can indicate a missing assertion, equivalent behavior, or unreachable code.
+
+Execution requires a trusted repository. Disposable copies isolate edits but are not an operating-system sandbox. Passing the sampled checks does not establish whole-program correctness.
+
+Existing `vouch`, `vouch-jev`, and Guard command aliases and `vouch.config.json` remain supported. Install only the Proof-Jev plugin. The source tree and distribution contain only the code-analysis, review, and mutation-testing product.
 
 ## Development
 
@@ -234,11 +124,8 @@ npm run typecheck
 npm test
 npm run verify:change-demo
 npm run verify:install
-npm run verify:example
+npm run plugin:build
+npm run verify:plugin
 ```
 
-CI runs without provider credentials. See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and the [changelog](CHANGELOG.md).
-
-## License
-
-[MIT licensed](LICENSE). Verification uses [Playwright](https://playwright.dev/), [MCP](https://modelcontextprotocol.io/), and [Jev](https://docs.typesafe.ai/). Codex and Claude Code are supported integrations.
+The complete test suite exercises the code product with models disabled. Real repository validation exposed five missing regression checks in Proof-Jev’s own production changes; added tests improved detection from 20 to 25 of the same 29 sampled mutations. See [the measured results and remaining limitations](docs/validation.md). [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [MIT license](LICENSE).

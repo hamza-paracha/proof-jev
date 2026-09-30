@@ -1,0 +1,84 @@
+{
+  "description": "Automatically track coding prompts, check edited code, verify completion, and cancel on interruption. Uses the connected Proof-Jev MCP server and its configured permissions. One repair continuation per turn; no background test daemon.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "mcp_tool",
+            "server": "proof-jev",
+            "tool": "task_hook",
+            "input": {
+              "hook_event_name": "UserPromptSubmit",
+              "session_id": "${session_id}",
+              "turn_id": "${turn_id}",
+              "prompt": "${prompt}",
+              "cwd": "${cwd}"
+            },
+            "timeout": 30,
+            "statusMessage": "Tracking task with Proof-Jev"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^(Bash|apply_patch|Edit|Write)$",
+        "hooks": [
+          {
+            "type": "mcp_tool",
+            "server": "proof-jev",
+            "tool": "task_hook",
+            "input": {
+              "hook_event_name": "PostToolUse",
+              "session_id": "${session_id}",
+              "turn_id": "${turn_id}",
+              "cwd": "${cwd}"
+            },
+            "timeout": 60,
+            "statusMessage": "Checking code changes with Proof-Jev"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "mcp_tool",
+            "server": "proof-jev",
+            "tool": "task_hook",
+            "input": {
+              "hook_event_name": "Stop",
+              "session_id": "${session_id}",
+              "turn_id": "${turn_id}",
+              "stop_hook_active": "${stop_hook_active}",
+              "cwd": "${cwd}"
+            },
+            "timeout": 120,
+            "statusMessage": "Verifying completion with Proof-Jev"
+          }
+        ]
+      }
+    ],
+    "Interrupt": [
+      {
+        "hooks": [
+          {
+            "type": "mcp_tool",
+            "server": "proof-jev",
+            "tool": "task_hook",
+            "input": {
+              "hook_event_name": "Interrupt",
+              "session_id": "${session_id}",
+              "turn_id": "${turn_id}",
+              "cwd": "${cwd}"
+            },
+            "timeout": 3,
+            "statusMessage": "Cancelling Proof-Jev verification"
+          }
+        ]
+      }
+    ]
+  }
+}
