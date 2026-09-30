@@ -7,7 +7,7 @@ import type { ChangedFile } from "./schema.ts";
 
 const exec = promisify(execFile);
 export const codeFile = /\.(?:[cm]?[jt]sx?)$/i;
-export const testFile = /(?:^|\/)(?:__tests__\/.*|[^/]+\.(?:test|spec))\.[cm]?[jt]sx?$/i;
+export const testFile = /^(?:test|tests)\.[cm]?[jt]sx?$|(?:^|\/)(?:(?:__tests__|test|tests)\/.*|[^/]+\.(?:test|spec))\.[cm]?[jt]sx?$/i;
 // Never stage credentials, dependencies or generated reports.
 const excluded = /(?:^|\/)(?:\.git|node_modules|out|auth|runner-data|coverage|dist|build|\.next|\.venv|\.ssh|\.aws)(?:\/|$)|(?:^|\/)(?:\.env(?:\..*)?|\.npmrc|\.pypirc|.*\.(?:pem|key|p12|pfx)|HANDOFF\.md)$/i;
 export function allowedSnapshotPath(path: string) {
@@ -58,5 +58,8 @@ export async function snapshotRepository(projectRoot: string, base: string, sign
   }
   const hash = createHash("sha256");
   for (const [name, data] of files) hash.update(name).update("\0").update(String(modes.get(name))).update("\0").update(data).update("\0");
+  // Omitted paths have no captured bytes. Their changed/unsupported state still
+  // belongs to the evidence fingerprint, or an excluded edit can reuse a pass.
+  hash.update("\0scope\0").update(JSON.stringify({ baseCommit, changes, warnings }));
   return { root, baseCommit, hash: hash.digest("hex"), files, modes, changes, warnings };
 }

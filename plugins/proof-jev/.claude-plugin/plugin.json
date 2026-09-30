@@ -1,6 +1,6 @@
 {
   "name": "proof-jev",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "Review code changes, trace affected tests, and find bugs that passing tests miss with mutation testing.",
   "author": {
     "name": "proof-jev contributors"

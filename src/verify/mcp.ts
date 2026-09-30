@@ -57,7 +57,7 @@ export function createVerificationServer(options: ChangeOptions & { review?: Rev
     try {
       const signal = options.signal ? AbortSignal.any([options.signal, extra.signal]) : extra.signal;
       const report = await verifyChange(input, { ...options, signal });
-      const summary = { runId: report.runId, status: report.status, reason: report.reason, summary: report.summary, artifacts: report.artifacts,
+      const summary = { runId: report.runId, status: report.status, reason: report.reason, failure: report.failure, summary: report.summary, artifacts: report.artifacts,
         affectedTests: report.plan.affectedTests, gaps: report.plan.gaps, limitations: report.limitations,
         mutations: report.mutations.map((m) => ({ id: m.mutation.id, file: m.mutation.file, line: m.mutation.line, before: m.mutation.before, after: m.mutation.after,
           outcome: m.outcome, suggestedTest: m.mutation.suggestedTest, patch: m.patch, runs: m.runs.map((r) => ({ outcome: r.outcome, exitCode: r.exitCode, durationMs: r.durationMs })) })) };

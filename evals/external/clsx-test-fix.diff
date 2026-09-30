@@ -1,0 +1,17 @@
+diff --git a/test/index.js b/test/index.js
+index 5fd9dec..4efea4a 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -93,4 +93,12 @@ test('functions', () => {
+ 	assert.is(fn(foo, 'hello', [[fn], 'world']), 'hello world');
+ });
+ 
++test('arrays ignore inherited entries beyond their length', () => {
++  const input = ['foo'];
++  const prototype = Object.create(Array.prototype);
++  prototype[1] = 'outside-the-array';
++  Object.setPrototypeOf(input, prototype);
++  assert.is(fn(input), 'foo');
++});
++
+ test.run();

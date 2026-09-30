@@ -1,0 +1,29 @@
+diff --git a/test.js b/test.js
+index 4e4cf3c..9b3efa3 100644
+--- a/test.js
++++ b/test.js
+@@ -1,12 +1,14 @@
+ 'use strict';
+ 
+-var isArray = require('./');
++var isArray;
+ var test = require('tape');
+ 
+ var nativeIsArray = Array.isArray;
+ 
+ test('is array (only polyfill)', function (t) {
+   delete Array.isArray;
++  delete require.cache[require.resolve('./')];
++  isArray = require('./');
+   t.ok(isArray([]));
+   t.notOk(isArray({}));
+   t.notOk(isArray(null));
+@@ -33,6 +35,8 @@ test('is array (only polyfill)', function (t) {
+ 
+ test('is array (native)', function (t) {
+   Array.isArray = nativeIsArray;
++  delete require.cache[require.resolve('./')];
++  isArray = require('./');
+   t.ok(isArray([]));
+   t.notOk(isArray({}));
+   t.notOk(isArray(null));

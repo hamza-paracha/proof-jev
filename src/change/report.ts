@@ -1,5 +1,6 @@
 import type { ChangePlan, Mutation } from "./schema.ts";
 import type { CommandResult } from "./process.ts";
+import type { CommandFailure } from "./failure.ts";
 
 export interface MutationResult {
   mutation: Mutation; outcome: "detected" | "survived" | "invalid" | "inconclusive";
@@ -10,6 +11,7 @@ export interface ChangeReport {
   reason: string; startedAt: string; durationMs: number; plan: ChangePlan;
   setup?: CommandResult; validation?: CommandResult; baseline: CommandResult[]; finalBaseline?: CommandResult;
   acceptance?: { name: string; runs: CommandResult[] }[];
+  failure?: CommandFailure;
   mutations: MutationResult[]; summary: { candidates: number; scheduled: number; tested: number; detected: number; survived: number; invalid: number; inconclusive: number; untested: number };
   artifacts: { report: string; markdown: string; html: string; plan: string }; limitations: string[];
 }
@@ -21,6 +23,7 @@ export function markdownReport(report: ChangeReport) {
     `Detected: **${s.detected}** · Survived: **${s.survived}** · Inconclusive: **${s.inconclusive}** · Invalid: **${s.invalid}** · Untested candidates: **${s.untested}**\n\n` +
     `## Changed behavior and test reachability\n\n${report.plan.changedSymbols.map((s) => `- ${escape(s.file)}:${s.startLine} — ${escape(s.name)}`).join("\n") || "No changed callable symbols identified."}\n\n` +
     `Static affected tests: ${report.plan.affectedTests.map(escape).join(", ") || "none found"}. This is not measured coverage.\n\n` +
+    (report.failure ? `## Failed command\n\n${escape(report.failure.phase)}: ${escape(report.failure.outcome)} (exit ${report.failure.exitCode ?? "none"}).\n\nCommand: ${escape(report.failure.command)}\n\nUntrusted command output:\n\n${report.failure.outputExcerpt.split("\n").map(line => `> ${escape(line)}`).join("\n")}\n\n` : "") +
     (report.acceptance?.length ? `## Acceptance checks\n\n${report.acceptance.map(c => `- ${escape(c.name)}: ${c.runs.map(r => r.outcome).join(", ")}`).join("\n")}\n\n` : "") +
     `## Mutation evidence\n\n| Location | Change | Outcome | Suggested regression test |\n| --- | --- | --- | --- |\n` +
     report.mutations.map((m) => `| ${escape(m.mutation.file)}:${m.mutation.line} | ${escape(m.mutation.before)} → ${escape(m.mutation.after)} | ${m.outcome} | ${escape(m.mutation.suggestedTest)} |`).join("\n") +

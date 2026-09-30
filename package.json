@@ -1,6 +1,6 @@
 {
   "name": "proof-jev",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "private": true,
   "description": "Code review, diff analysis, and mutation testing for coding agents. Find bugs that passing tests miss.",
   "license": "MIT",
@@ -27,7 +27,8 @@
     "verify:review-install": "tsx scripts/verify-review-install.ts",
     "review:eval": "tsx scripts/evaluate-review.ts",
     "verify:plugin": "tsx scripts/verify-plugin.ts",
-    "verify:repository": "tsx scripts/verify-repository.ts"
+    "verify:repository": "tsx scripts/verify-repository.ts",
+    "verify:external": "tsx scripts/verify-external.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
@@ -69,7 +70,11 @@
     "docs/review-validation.json",
     "docs/repository-validation.json",
     "docs/automatic-validation.json",
-    "docs/task-loop.md"
+    "docs/task-loop.md",
+    "docs/external-validation.json",
+    "evals/external/",
+    "scripts/verify-external.ts",
+    "scripts/verify-codex-hooks.py"
   ],
   "keywords": [
     "mcp",

@@ -29,6 +29,8 @@ node /path/to/vouch/bin/vouch.mjs analyze --project /path/to/repo --base HEAD
 
 `HEAD` compares staged, unstaged and untracked files to the current commit. To check committed work, select the commit before the change, for example `--base HEAD~1`. The project must be the Git root. Analysis lists changed symbols, import-reachable tests, unsupported paths and mutation candidates. A read-only analysis does not claim that any tests passed.
 
+Test discovery recognizes `*.test.*`, `*.spec.*`, `__tests__/`, `test/`, `tests/`, and root `test.js` / `tests.js` entry points across supported JS/TS extensions. Root directory imports such as `require('./')` resolve to index modules. Files in test directories are treated as test code and excluded from mutation targets; discovery remains static reachability, not measured coverage or a guarantee that every file is an executable test entry point.
+
 ## Configure trusted test execution
 
 Create `vouch.config.json` in the target repository:
@@ -92,6 +94,8 @@ Ask your agent:
 ## Evidence and interpretation
 
 Each run writes `plan.json`, `report.json`, `report.md`, and a `patches/` directory under `out/verification/change-<id>/` or `VERIFY_OUTPUT_DIR`. MCP returns compact results and artifact paths; full command output remains local.
+
+Failed original commands also return a compact `failure` record: phase, optional acceptance-check name, exit code, bounded command display, and redacted `outputExcerpt`. The excerpt is labeled as untrusted evidence in automatic feedback and appears in HTML/Markdown reports. Expected mutant failures do not populate this field. Redaction is best-effort and cannot recognize every secret format.
 
 | Status | Meaning |
 | --- | --- |

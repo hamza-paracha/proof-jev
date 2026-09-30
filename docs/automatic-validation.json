@@ -1,13 +1,28 @@
 {
   "schemaVersion": 1,
   "version": "0.7.1",
-  "host": { "name": "Codex CLI", "version": "0.159.1" },
+  "host": {
+    "name": "Codex CLI",
+    "version": "0.159.1"
+  },
   "installedEngine": {
     "transport": "stdio MCP using the installed plugin bundle",
     "projectBound": true,
     "unchangedTurnSkipped": true,
-    "weakTests": { "candidates": 1, "tested": 1, "detected": 0, "survived": 1, "untested": 0 },
-    "strongTests": { "candidates": 1, "tested": 1, "detected": 1, "survived": 0, "untested": 0 },
+    "weakTests": {
+      "candidates": 1,
+      "tested": 1,
+      "detected": 0,
+      "survived": 1,
+      "untested": 0
+    },
+    "strongTests": {
+      "candidates": 1,
+      "tested": 1,
+      "detected": 1,
+      "survived": 0,
+      "untested": 0
+    },
     "identicalMutationIds": true,
     "postEditAnalysis": true,
     "deliberateBugBlocked": true,
@@ -36,5 +51,66 @@
     "Successful repair and interrupt cancellation were exercised over MCP, not through native Codex events.",
     "Hook trust and repository execution configuration are required; host errors can skip verification.",
     "One sampled mutation demonstrates the boundary assertion; it does not establish whole-program correctness."
-  ]
+  ],
+  "nativeRepairValidation080": {
+    "version": "0.8.0",
+    "exitCode": 0,
+    "requests": [
+      {
+        "request": 1,
+        "promptCaptured": true,
+        "executionEnabled": true,
+        "postEditAnalysis": false,
+        "stopContinuation": false,
+        "assertionEvidence": false
+      },
+      {
+        "request": 2,
+        "promptCaptured": true,
+        "executionEnabled": true,
+        "postEditAnalysis": false,
+        "stopContinuation": false,
+        "assertionEvidence": false
+      },
+      {
+        "request": 3,
+        "promptCaptured": true,
+        "executionEnabled": true,
+        "postEditAnalysis": true,
+        "stopContinuation": false,
+        "assertionEvidence": false
+      },
+      {
+        "request": 4,
+        "promptCaptured": true,
+        "executionEnabled": true,
+        "postEditAnalysis": true,
+        "stopContinuation": true,
+        "assertionEvidence": true
+      },
+      {
+        "request": 5,
+        "promptCaptured": true,
+        "executionEnabled": true,
+        "postEditAnalysis": true,
+        "stopContinuation": true,
+        "assertionEvidence": true
+      }
+    ],
+    "scriptErrors": [],
+    "originalTaskPreserved": true,
+    "finalDecision": "checks_passed",
+    "requirements": [
+      {
+        "id": "shipping",
+        "description": "Free at 50 and above, 5 below",
+        "check": "shipping",
+        "status": "check_passed"
+      }
+    ],
+    "sourceRepaired": true,
+    "paidModelCalls": 0,
+    "provider": "local scripted responses; not autonomous model repair",
+    "executionPermission": "Temporary invocation-level MCP execution environment and task_event approval for this disposable fixture only; installed hook trust preserved"
+  }
 }

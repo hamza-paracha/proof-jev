@@ -27,7 +27,7 @@ export interface TaskFeedback {
   requirements: (Requirement & { status: "check_passed" | "check_failed" | "unverified" })[];
   changedFiles: string[]; affectedTests: string[]; candidates: number;
   findings: Finding[]; limitations: string[];
-  verification?: Pick<ChangeReport, "status" | "reason" | "summary" | "artifacts">;
+  verification?: Pick<ChangeReport, "status" | "reason" | "failure" | "summary" | "artifacts">;
   review?: Pick<GuardReport, "status" | "summary" | "incomplete" | "artifacts">;
 }
 interface TaskState {
@@ -176,7 +176,7 @@ export class TaskLoop {
           snapshot, config: { ...task.config, totalTimeoutMs: Math.min(task.config.totalTimeoutMs, 60000) }, maxMutants: mode === "complete" && plan.candidateCount ? this.options.maxMutants ?? 3 : 0,
           checks: task.requirements.flatMap(r => r.check ? [r.check] : []),
         });
-        feedback.verification = { status: report.status, reason: report.reason, summary: report.summary, artifacts: report.artifacts };
+        feedback.verification = { status: report.status, reason: report.reason, failure: report.failure, summary: report.summary, artifacts: report.artifacts };
         for (const requirement of feedback.requirements) {
           const runs = report.acceptance?.find(c => c.name === requirement.check)?.runs;
           requirement.status = runs?.length === 2 && runs.every(r => r.outcome === "passed") ? "check_passed"

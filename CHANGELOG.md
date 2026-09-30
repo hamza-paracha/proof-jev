@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.0
+
+- Invalidate cached verification when tracked files excluded from snapshots change; scope warnings now contribute to source fingerprints.
+- Resolve root directory imports and discover conventional `test.js`, `test/`, and `tests/` layouts. Test files are excluded from production mutation targets.
+- Send bounded, redacted command failures directly through MCP and automatic hook feedback, with the phase, exit status, configured command, and assertion excerpt. HTML and Markdown reports include the same evidence.
+- Scrub quoted credentials and private-key/token patterns from stored command output as well as model-facing excerpts.
+- Add reproducible, sequential checks against pinned `is-number`, `clsx`, and `isarray` source and upstream tests, with exact mutation comparisons and focused test corrections.
+- Include task-loop source in runtime fingerprints.
+
 ## 0.7.1
 
 - Fix native Codex startup: use literal Node arguments with a plugin-relative working directory instead of a Claude-only path placeholder.

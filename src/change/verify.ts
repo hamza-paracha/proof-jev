@@ -10,6 +10,7 @@ import { changeExecutionSchema, projectConfigSchema, type Mutation, type Project
 import { runCommand } from "./process.ts";
 import { markdownReport, type ChangeReport } from "./report.ts";
 import { redact } from "../verify/redact.ts";
+import { commandFailure } from "./failure.ts";
 
 export interface ChangeOptions { projectRoot?: string; allowExecution?: boolean; outputDir?: string; signal?: AbortSignal }
 // Internal execution controls used by the task loop; never accepted as tool arguments.
@@ -154,6 +155,7 @@ export async function verifyChange(raw: unknown, options: ChangeOptions, capture
       survived: outcomes.filter((o) => o === "survived").length, invalid: outcomes.filter((o) => o === "invalid").length,
       inconclusive: outcomes.filter((o) => o === "inconclusive").length, untested: Math.max(0, plan.candidateCount - outcomes.length) });
     report.durationMs = Date.now() - started;
+    report.failure = commandFailure(report);
     const safe = redact(report);
     await Promise.all([writeFile(safe.artifacts.html, changeHtml(safe), { mode: 0o600 }), writeFile(safe.artifacts.report, JSON.stringify(safe, null, 2) + "\n", { mode: 0o600 }),
       writeFile(safe.artifacts.plan, JSON.stringify(safe.plan, null, 2) + "\n", { mode: 0o600 }),

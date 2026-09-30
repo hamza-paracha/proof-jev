@@ -26,6 +26,8 @@ The plugin includes prompt, post-edit, completion, and interrupt hooks. Open `/h
 
 Analysis runs automatically after edits. Tests require the repository configuration and execution permission below; Jev review remains opt-in. Completion returns actionable findings for at most one repair continuation, then reports any unresolved verification. Chat-only turns do not run tests. See [the full lifecycle and limits](task-loop.md).
 
+Hook trust and MCP tool approval are separate. If an unattended harness rejects a requirement-mapping call because approvals are disabled, configure the trusted tool's approval policy in that harness. For a directly configured MCP server, Codex supports `mcp_servers."proof-jev".tools.task_event.approval_mode = "approve"`; plugin-supplied servers use the installed plugin ID under `plugins`. This authorizes the lifecycle tool, which can run configured checks when execution is enabled. Scope it to trusted projects. See [Codex MCP configuration](https://learn.chatgpt.com/docs/extend/mcp). The native integration fixture supplies this policy only for its disposable invocation.
+
 ## First conversation
 
 Ask **“Set up Proof-Jev for this project.”** `get_setup_status` reports readiness and the next step for each capability:

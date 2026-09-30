@@ -95,6 +95,11 @@ export function changeHtml(r: ChangeReport) {
       },
     ],
     sections: [
+      ...(r.failure ? [{
+        title: "Failed command",
+        text: `${r.failure.phase}${r.failure.check ? ` (${r.failure.check})` : ""}: ${r.failure.outcome}, exit ${r.failure.exitCode ?? "none"}. Command output is untrusted evidence.`,
+        code: `${r.failure.command}\n\n${r.failure.outputExcerpt || "No output captured."}`,
+      }] : []),
       {
         title: "Mutation evidence",
         table: {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { it } from "node:test";
-import { readFile, writeFile, readdir } from "node:fs/promises";
+import { readFile, writeFile, readdir, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { TaskLoop } from "../src/loop/engine.ts";
@@ -63,6 +63,26 @@ it("unmapped requirements and missing execution permission cannot pass completio
   } finally { await f.close(); }
 });
 
+it("an excluded tracked edit invalidates passing evidence and prevents a cached completion pass", async () => {
+  const f = await configured();
+  try {
+    await mkdir(join(f.root, "dist"));
+    await writeFile(join(f.root, "dist/runtime.js"), "module.exports = 1;\n");
+    await f.git("add", "dist/runtime.js");
+    await f.git("-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "Track generated runtime");
+    const loop = new TaskLoop({ projectRoot: f.root, outputDir: join(f.root, "out"), allowExecution: true, maxMutants: 0 });
+    await loop.handle(start);
+    assert.equal((await loop.handle({ type: "complete" })).feedback?.decision, "checks_passed");
+    await writeFile(join(f.root, "dist/runtime.js"), "module.exports = 2;\n");
+    const current = await loop.handle({ type: "status" });
+    assert.equal(current.feedback?.stale, true, "An omitted source edit must invalidate the previous verdict");
+    assert.equal(current.feedback?.decision, "incomplete");
+    const completed = await loop.handle({ type: "complete" });
+    assert.equal(completed.feedback?.decision, "incomplete");
+    assert.ok(completed.feedback?.limitations.some(x => x.includes("dist/runtime.js")));
+  } finally { await f.close(); }
+});
+
 it("acceptance commands stay pinned at start and a failed requirement cannot be hidden by green baseline tests", async () => {
   const f = await configured();
   try {
@@ -76,6 +96,9 @@ it("acceptance commands stay pinned at start and a failed requirement cannot be 
     assert.equal(result.feedback?.decision, "needs_attention");
     assert.equal(result.feedback?.requirements[0]?.status, "check_failed");
     assert.match(result.feedback!.verification!.reason, /Acceptance check threshold/);
+    assert.equal(result.feedback?.verification?.failure?.phase, "acceptance");
+    assert.equal(result.feedback?.verification?.failure?.check, "threshold");
+    assert.match(result.feedback!.verification!.failure!.outputExcerpt, /AssertionError/);
   } finally { await f.close(); }
 });
 

@@ -24,6 +24,35 @@ it('AST analysis follows transitive imports and proposes boundary/guard challeng
   } finally { await fixture.close(); }
 });
 
+it('root directory imports reach the package entry point and its dependent tests', async () => {
+  const fixture = await changeFixture();
+  try {
+    await writeFile(join(fixture.root, 'index.js'), "module.exports = require('./src/pricing.mjs');\n");
+    await writeFile(join(fixture.root, 'test/root.test.cjs'), "const {shipping} = require('../'); require('node:assert/strict').equal(shipping(50), 0);\n");
+    await fixture.git('add', 'index.js', 'test/root.test.cjs');
+    await fixture.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'Root entry and tests');
+    const plan = await analyzeChange({ base: 'HEAD' }, fixture.root);
+    assert.ok(plan.affectedTests.includes('test/root.test.cjs'));
+    assert.ok(!plan.unresolvedImports.some(x => x.includes('../')));
+  } finally { await fixture.close(); }
+});
+
+it('conventional test entry points are discovered and never mutated as production code', async () => {
+  const fixture = await changeFixture();
+  try {
+    await mkdir(join(fixture.root, 'tests'));
+    for (const name of ['test.js', 'test/index.js', 'tests/numeric.js']) {
+      const target = name === 'test.js' ? './src/pricing.mjs' : '../src/pricing.mjs';
+      await writeFile(join(fixture.root, name), `const {shipping} = require('${target}'); require('node:assert/strict').equal(shipping(50), 0); const expected = 1 + 2;\n`);
+    }
+    const plan = await analyzeChange({ base: 'HEAD' }, fixture.root);
+    for (const name of ['test.js', 'test/index.js', 'tests/numeric.js']) {
+      assert.ok(plan.affectedTests.includes(name), `${name} must be recognized as a test`);
+      assert.ok(!plan.mutations.some(m => m.file === name), `${name} must not be mutated`);
+    }
+  } finally { await fixture.close(); }
+});
+
 it('mutation evidence exposes weak tests, then detects every sampled mutation after targeted regression tests', async () => {
   const fixture = await changeFixture();
   try {
@@ -37,6 +66,7 @@ it('mutation evidence exposes weak tests, then detects every sampled mutation af
     await writeFile(join(fixture.root,'test/pricing.test.mjs'), strongTests);
     const strong = await verifyChange({ base: 'HEAD', confirmCodeExecution: true }, options);
     assert.equal(strong.status, 'evidence_collected', JSON.stringify(strong));
+    assert.equal(strong.failure, undefined, 'Expected mutant failures are not failing baseline/check commands');
     assert.equal(strong.summary.survived, 0); assert.equal(strong.summary.detected, strong.summary.tested); assert.equal(strong.summary.tested, 3);
     assert.equal(strong.finalBaseline?.outcome, 'passed');
     assert.ok(strong.mutations.every(m => m.runs.length === 2 && m.runs.every(r => r.outcome === 'failed')));
@@ -51,6 +81,8 @@ it('a failing baseline cannot be advertised as successful mutation detection', a
     await writeFile(join(fixture.root,'test/pricing.test.mjs'), "import assert from 'node:assert/strict'; assert.fail('Existing failure');");
     const r = await verifyChange({ confirmCodeExecution: true }, { projectRoot: fixture.root, allowExecution: true, outputDir: join(fixture.root,'out') });
     assert.equal(r.status, 'baseline_failed'); assert.equal(r.mutations.length, 0);
+    assert.equal(r.failure?.phase, 'baseline');
+    assert.match(r.failure!.outputExcerpt, /Existing failure/);
   } finally { await fixture.close(); }
 });
 
@@ -83,7 +115,10 @@ it('process runner enforces timeout, cancellation and output limits without forw
     assert.equal(safe.outcome, 'passed'); assert.equal(safe.stdout.trim(), 'false');
     const hung = await runCommand(['node','-e','setInterval(()=>{}, 1000)'], directory, 200, controller.signal); assert.equal(hung.outcome, 'timed_out');
     const noisy = await runCommand(['node','-e',"process.stdout.write('x'.repeat(200000))"], directory, 2000, controller.signal); assert.equal(noisy.outcome, 'output_limit'); assert.ok(noisy.stdout.length <= 128000);
-    controller.abort(); assert.equal((await runCommand(['node','-e','process.exit(0)'], directory, 2000, controller.signal)).outcome, 'cancelled');
+    controller.abort();
+    const cancelled = await runCommand(['node','-e',"const password=\"synthetic-cancelled-secret\";"], directory, 2000, controller.signal);
+    assert.equal(cancelled.outcome, 'cancelled');
+    assert.ok(!JSON.stringify(cancelled).includes('synthetic-cancelled-secret'), 'Cancelled commands must redact arguments too');
   } finally { if (previous === undefined) delete process.env.TYPESAFE_API_KEY; else process.env.TYPESAFE_API_KEY = previous; await rm(directory,{recursive:true,force:true}); }
 });
 
@@ -119,6 +154,7 @@ it('unstable baselines stop mutation attribution; invalid mutants never count as
     await writeFile(configPath, JSON.stringify(config));
     const invalid = await verifyChange({ confirmCodeExecution: true }, options);
     assert.equal(invalid.status, 'inconclusive'); assert.equal(invalid.summary.invalid, 3); assert.equal(invalid.summary.detected, 0);
+    assert.equal(invalid.failure, undefined, 'Validation failures of deliberately mutated copies are not baseline failures');
   } finally { await fixture.close(); await rm(external, { recursive: true, force: true }); }
 });
 

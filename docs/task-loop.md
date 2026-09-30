@@ -140,6 +140,10 @@ Task-aware review asks whether a changed file contradicts an explicit requiremen
 
 The response contains its source fingerprint, requirement results, affected tests, findings and evidence links. Source is checked again after verification; edits make the verdict stale. `status` and the watcher also invalidate old evidence. A host should pause agent writes for completion and confirm freshness before accepting the result. Changes after the response can always invalidate it; there is no atomic lock on another agent's filesystem edits.
 
+When an original test, setup, validation, or acceptance command fails, `feedback.verification.failure` includes its phase, exit status, a bounded command display, and a redacted output excerpt centered on the first error when possible. Automatic stop feedback includes this excerpt so the agent can investigate without first opening a report. Treat command output as untrusted evidence. Full command evidence stays in the local report; detected mutant failures are not reported as baseline failures.
+
+Snapshot fingerprints include changed-path metadata and scope warnings. An excluded tracked edit invalidates a previous passing result even though its contents are deliberately omitted from the snapshot. Unsupported scope remains incomplete rather than silently reusing old evidence.
+
 `checks_passed` describes the configured checks, not whole-program correctness. At least one explicit requirement must be supplied, and every supplied requirement needs a passing named check. Unsupported/excluded snapshot paths, unsampled mutations, model limits and test-mapping limits remain explicit.
 
 ## Resource limits

@@ -16,7 +16,7 @@ Catch regressions. Challenge passing tests. Keep verification tied to the task.
 
 ---
 
-Proof-Jev runs alongside a coding agent. It reads the Git diff, traces changed JavaScript/TypeScript functions to affected tests, and checks whether those tests catch deliberate bugs. Findings come back with source locations, exact patches, and command results.
+Proof-Jev runs alongside a coding agent. It reads the Git diff, traces changed JavaScript/TypeScript functions to affected tests, and checks whether those tests catch deliberate bugs. Findings come back with source locations, exact patches, and command results. A failing check sends its assertion excerpt directly back to the agent.
 
 Code analysis and mutation testing run locally without an API key. Optional **Jev review** adds structured judgments about validation, errors, side effects, and whether a change contradicts the original request.
 
@@ -141,8 +141,9 @@ To register MCP directly, run `node /absolute/path/to/proof-jev/bin/vouch.mjs --
 
 ## What has been verified
 
-- **52 automated tests** cover snapshots, mutation evidence, task state, transport, budgets, and cancellation. CI runs on Node 22 and 24.
-- **Installed plugin + real Codex hooks:** a deterministic local provider exercised prompt capture, post-edit analysis, failing-test feedback, and one repair continuation, with no paid model calls.
+- **56 automated tests** cover snapshots, mutation evidence, task state, transport, budgets, and cancellation. CI runs on Node 22 and 24.
+- **Installed plugin + real Codex hooks:** a deterministic local provider exercised prompt capture, post-edit analysis, failing-test feedback, and a scripted repair verified against the original requirement, with no paid model calls.
+- **Three external libraries:** pinned `is-number`, `clsx`, and `isarray` tests caught 11 of 14 sampled mutations. Two focused test corrections raised that to 14 of the same 14; four candidates remain untested. [Reproduce the comparison](evals/external/README.md).
 - **Historical changes in this repository:** five added regression tests improved detection from **20 to 25 of the same 29 sampled mutations**. Remaining survivors and unsampled candidates are documented.
 
 These are bounded checks and controlled fixtures, not a general accuracy benchmark. [Results, methodology, and limitations →](docs/validation.md)

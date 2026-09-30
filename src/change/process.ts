@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { join } from "node:path";
 import { mkdir } from "node:fs/promises";
-import { redact } from "../verify/redact.ts";
+import { redact, scrubSource } from "../verify/redact.ts";
 
 export interface CommandResult { command: string[]; exitCode: number | null; outcome: "passed" | "failed" | "timed_out" | "cancelled" | "output_limit" | "error"; durationMs: number; stdout: string; stderr: string }
 
@@ -11,7 +11,7 @@ export async function runCommand(command: string[], cwd: string, timeoutMs: numb
   const start = Date.now();
   const home = join(cwd, ".vouch-home"), temp = join(cwd, ".vouch-tmp");
   await mkdir(home, { recursive: true }); await mkdir(temp, { recursive: true });
-  if (signal.aborted) return { command, exitCode: null, outcome: "cancelled", durationMs: 0, stdout: "", stderr: "" };
+  if (signal.aborted) return { command: command.map(scrubSource), exitCode: null, outcome: "cancelled", durationMs: 0, stdout: "", stderr: "" };
   return new Promise((resolve) => {
     let stdout = "", stderr = "", bytes = 0;
     let stop: CommandResult["outcome"] | undefined;
@@ -41,7 +41,8 @@ export async function runCommand(command: string[], cwd: string, timeoutMs: numb
     child.on("close", (code) => {
       // Also remove detached descendants which outlived an otherwise successful command.
       kill(); clearTimeout(timer); signal.removeEventListener("abort", abort);
-      resolve(redact({ command, exitCode: code, outcome: stop ?? (code === 0 ? "passed" : "failed"), durationMs: Date.now() - start, stdout, stderr }));
+      resolve(redact({ command: command.map(scrubSource), exitCode: code, outcome: stop ?? (code === 0 ? "passed" : "failed"), durationMs: Date.now() - start,
+        stdout: scrubSource(stdout), stderr: scrubSource(stderr) }));
     });
     if (signal.aborted) abort();
   });

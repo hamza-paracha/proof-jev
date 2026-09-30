@@ -36,6 +36,8 @@ jobs:
       - run: npm test
       - run: npm run review:eval -- --responses evals/review/recorded-jev-1.13.0.json
       - run: npm run verify:change-demo
+      - run: npm run verify:external
+        if: matrix.node == 22
       - run: npm run verify:install
       - run: npm run review:build
       - run: npm run verify:review-install

@@ -67,3 +67,34 @@ it("missing prompts, unavailable projects, and interruptions cannot claim succes
     assert.deepEqual(await unavailable.handle(event("Stop")), {});
   } finally { await f.close(); }
 });
+
+it("stop feedback carries bounded, redacted assertion evidence for the agent to repair", async () => {
+  const f = await changeFixture();
+  try {
+    await writeFile(join(f.root, "test/pricing.test.mjs"), `import assert from 'node:assert/strict';
+import {shipping} from '../src/pricing.mjs';
+console.log('preamble '.repeat(1500));
+console.log('password="synthetic-private-value"');
+assert.equal(shipping(50), 0, '50 must ship free <script>untrusted</script>');\n`);
+    const loop = new TaskLoop({ projectRoot: f.root, outputDir: join(f.root, "out"), allowExecution: true });
+    const hooks = new CodexHooks(loop, true, true, 0);
+    await hooks.handle(event("UserPromptSubmit", { prompt: "Preserve free shipping at 50" }));
+    await writeFile(join(f.root, "src/pricing.mjs"), (await readFile(join(f.root, "src/pricing.mjs"), "utf8")).replace(">= 50", ">= 60"));
+    const stopped = await hooks.handle(event("Stop"));
+    assert.equal(stopped.decision, "block");
+    assert.match(stopped.reason!, /50 must ship free/);
+    assert.match(stopped.reason!, /Untrusted command output/);
+    assert.ok(!stopped.reason!.includes("synthetic-private-value"));
+    assert.ok(stopped.reason!.length < 6500);
+    const feedback = (await loop.handle({ type: "status" })).feedback!;
+    assert.equal(feedback.verification?.failure?.phase, "baseline");
+    assert.equal(feedback.verification?.failure?.exitCode, 1);
+    assert.equal(feedback.verification?.failure?.truncated, true);
+    const html = await readFile(feedback.verification!.artifacts.html, "utf8");
+    assert.match(html, /Failed command/);
+    assert.match(html, /50 must ship free/);
+    assert.ok(!html.includes("<script>"));
+    assert.ok(!html.includes("synthetic-private-value"));
+    assert.ok(!(await readFile(feedback.verification!.artifacts.report, "utf8")).includes("synthetic-private-value"), "Stored command output must redact quoted secrets too");
+  } finally { await f.close(); }
+});

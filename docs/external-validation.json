@@ -1,0 +1,346 @@
+{
+  "schemaVersion": 1,
+  "version": "0.8.0",
+  "node": "v22.22.0",
+  "runtimeFingerprint": "cb9111e6ae698dfe322a1b7baa71f8c2e19f87054aa450ce60223507e38aaee8",
+  "repositories": [
+    {
+      "id": "is-number",
+      "repository": "https://github.com/jonschlinkert/is-number",
+      "revision": "98e8ff1da1a89f93d1397a24d7413ed15421c139",
+      "source": "index.js",
+      "sourceSha256": "04255e482e181687823a95b207802ddd32e746c65dce4c95a5176fc192735960",
+      "probe": "Current pinned module treated as a new file for a full-file mutation probe; upstream behavioral tests unchanged in the first run.",
+      "testCommand": [
+        "node",
+        "node_modules/mocha/bin/_mocha",
+        "test.js",
+        "--reporter",
+        "dot"
+      ],
+      "runnerAdaptation": "Upstream behavioral test runner; lint, build, audit, and publishing scripts are not run.",
+      "sourceUnchanged": true,
+      "modelCalls": 0,
+      "discovery": {
+        "before": [],
+        "after": [
+          "test.js"
+        ]
+      },
+      "before": {
+        "status": "evidence_collected",
+        "summary": {
+          "candidates": 7,
+          "scheduled": 6,
+          "tested": 6,
+          "detected": 6,
+          "survived": 0,
+          "invalid": 0,
+          "inconclusive": 0,
+          "untested": 1
+        },
+        "durationMs": 1238,
+        "baselineMs": 157,
+        "setupMs": 40,
+        "runnerReportedPasses": 111,
+        "mutations": [
+          {
+            "id": "1f71b6489b17",
+            "line": 11,
+            "before": "===",
+            "after": "!==",
+            "outcome": "detected"
+          },
+          {
+            "id": "43eb1dd66475",
+            "line": 12,
+            "before": "===",
+            "after": "!==",
+            "outcome": "detected"
+          },
+          {
+            "id": "69a35620659f",
+            "line": 12,
+            "before": "-",
+            "after": "+",
+            "outcome": "detected"
+          },
+          {
+            "id": "6de1c9237fcd",
+            "line": 14,
+            "before": "&&",
+            "after": "||",
+            "outcome": "detected"
+          },
+          {
+            "id": "9b8396aeb2e7",
+            "line": 14,
+            "before": "===",
+            "after": "!==",
+            "outcome": "detected"
+          },
+          {
+            "id": "efaee3e399c6",
+            "line": 14,
+            "before": "!==",
+            "after": "===",
+            "outcome": "detected"
+          }
+        ]
+      }
+    },
+    {
+      "id": "clsx",
+      "repository": "https://github.com/lukeed/clsx",
+      "revision": "925494cf31bcd97d3337aacd34e659e80cae7fe2",
+      "source": "src/index.js",
+      "sourceSha256": "a577c500f65ed167cea489dd39c149c36880f959fc6ca24e4e1cc545cb7a53e1",
+      "probe": "Current pinned module treated as a new file for a full-file mutation probe; upstream behavioral tests unchanged in the first run.",
+      "testCommand": [
+        "node",
+        "--import",
+        "tsx",
+        "node_modules/uvu/bin.js",
+        "test"
+      ],
+      "runnerAdaptation": "The upstream uvu assertions run under tsx instead of the legacy esm loader for Node 22 compatibility.",
+      "sourceUnchanged": true,
+      "modelCalls": 0,
+      "discovery": {
+        "before": [],
+        "after": [
+          "test/classnames.js",
+          "test/index.js"
+        ]
+      },
+      "before": {
+        "status": "gaps_found",
+        "summary": {
+          "candidates": 9,
+          "scheduled": 6,
+          "tested": 6,
+          "detected": 5,
+          "survived": 1,
+          "invalid": 0,
+          "inconclusive": 0,
+          "untested": 3
+        },
+        "durationMs": 2352,
+        "baselineMs": 331,
+        "setupMs": 42,
+        "runnerReportedPasses": 32,
+        "mutations": [
+          {
+            "id": "0d3b0c301a10",
+            "line": 4,
+            "before": "||",
+            "after": "&&",
+            "outcome": "detected"
+          },
+          {
+            "id": "36a02f756743",
+            "line": 4,
+            "before": "===",
+            "after": "!==",
+            "outcome": "detected"
+          },
+          {
+            "id": "69f57062f89b",
+            "line": 4,
+            "before": "===",
+            "after": "!==",
+            "outcome": "detected"
+          },
+          {
+            "id": "17622fc6e641",
+            "line": 6,
+            "before": "===",
+            "after": "!==",
+            "outcome": "detected"
+          },
+          {
+            "id": "bcf083c3475a",
+            "line": 9,
+            "before": "<",
+            "after": "<=",
+            "outcome": "survived"
+          },
+          {
+            "id": "4954784a9591",
+            "line": 12,
+            "before": "&&",
+            "after": "||",
+            "outcome": "detected"
+          }
+        ]
+      },
+      "strengthened": {
+        "status": "evidence_collected",
+        "summary": {
+          "candidates": 9,
+          "scheduled": 6,
+          "tested": 6,
+          "detected": 6,
+          "survived": 0,
+          "invalid": 0,
+          "inconclusive": 0,
+          "untested": 3
+        },
+        "durationMs": 2490,
+        "baselineMs": 306,
+        "setupMs": 41,
+        "runnerReportedPasses": 33,
+        "mutations": [
+          {
+            "id": "0d3b0c301a10",
+            "line": 4,
+            "before": "||",
+            "after": "&&",
+            "outcome": "detected"
+          },
+          {
+            "id": "36a02f756743",
+            "line": 4,
+            "before": "===",
+            "after": "!==",
+            "outcome": "detected"
+          },
+          {
+            "id": "69f57062f89b",
+            "line": 4,
+            "before": "===",
+            "after": "!==",
+            "outcome": "detected"
+          },
+          {
+            "id": "17622fc6e641",
+            "line": 6,
+            "before": "===",
+            "after": "!==",
+            "outcome": "detected"
+          },
+          {
+            "id": "bcf083c3475a",
+            "line": 9,
+            "before": "<",
+            "after": "<=",
+            "outcome": "detected"
+          },
+          {
+            "id": "4954784a9591",
+            "line": 12,
+            "before": "&&",
+            "after": "||",
+            "outcome": "detected"
+          }
+        ]
+      },
+      "testCorrection": "../evals/external/clsx-test-fix.diff"
+    },
+    {
+      "id": "isarray",
+      "repository": "https://github.com/juliangruber/isarray",
+      "revision": "3c1b04a4a7e89791cedaecf1f1bc8d6ecd0f897b",
+      "source": "index.js",
+      "sourceSha256": "493a6af97ac314457d3f8aa64a4519918c43d7028ea00434176121e73e489193",
+      "probe": "Current pinned module treated as a new file for a full-file mutation probe; upstream behavioral tests unchanged in the first run.",
+      "testCommand": [
+        "node",
+        "node_modules/tape/bin/tape",
+        "test.js"
+      ],
+      "runnerAdaptation": "Upstream behavioral test runner; lint, build, audit, and publishing scripts are not run.",
+      "sourceUnchanged": true,
+      "modelCalls": 0,
+      "discovery": {
+        "before": [],
+        "after": [
+          "test.js"
+        ]
+      },
+      "before": {
+        "status": "gaps_found",
+        "summary": {
+          "candidates": 2,
+          "scheduled": 2,
+          "tested": 2,
+          "detected": 0,
+          "survived": 2,
+          "invalid": 0,
+          "inconclusive": 0,
+          "untested": 0
+        },
+        "durationMs": 462,
+        "baselineMs": 165,
+        "setupMs": 41,
+        "runnerReportedPasses": 28,
+        "mutations": [
+          {
+            "id": "7a5c00780ebb",
+            "line": 5,
+            "before": "||",
+            "after": "&&",
+            "outcome": "survived"
+          },
+          {
+            "id": "a08e25cbe752",
+            "line": 6,
+            "before": "===",
+            "after": "!==",
+            "outcome": "survived"
+          }
+        ]
+      },
+      "strengthened": {
+        "status": "evidence_collected",
+        "summary": {
+          "candidates": 2,
+          "scheduled": 2,
+          "tested": 2,
+          "detected": 2,
+          "survived": 0,
+          "invalid": 0,
+          "inconclusive": 0,
+          "untested": 0
+        },
+        "durationMs": 603,
+        "baselineMs": 146,
+        "setupMs": 40,
+        "runnerReportedPasses": 28,
+        "mutations": [
+          {
+            "id": "7a5c00780ebb",
+            "line": 5,
+            "before": "||",
+            "after": "&&",
+            "outcome": "detected"
+          },
+          {
+            "id": "a08e25cbe752",
+            "line": 6,
+            "before": "===",
+            "after": "!==",
+            "outcome": "detected"
+          }
+        ]
+      },
+      "testCorrection": "../evals/external/isarray-test-fix.diff"
+    }
+  ],
+  "totals": {
+    "candidates": 18,
+    "sampled": 14,
+    "detectedBefore": 11,
+    "detectedAfter": 14,
+    "untested": 4
+  },
+  "limitations": [
+    "Pinned small libraries; not a representative application benchmark.",
+    "Full-file mutation probes, not historical change attribution or discovered production bugs.",
+    "Test corrections are explicit scripted edits to known behavior; no autonomous repair model was evaluated.",
+    "clsx uses its upstream uvu assertions with a modern tsx loader; project lint/build/audit scripts are not run.",
+    "Timing covers warm local verification runs with shared locked test-runner dependencies; cold installation and host startup are excluded.",
+    "Unsampled candidates remain unverified.",
+    "No upstream issues, pull requests, or messages were sent."
+  ]
+}

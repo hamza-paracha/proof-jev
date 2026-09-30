@@ -8,7 +8,8 @@ function importedFile(file: string, specifier: string, files: Map<string, Buffer
   if (!specifier.startsWith(".")) return undefined;
   const base = posix.normalize(posix.join(posix.dirname(file), specifier));
   const stem = base.replace(/\.[cm]?jsx?$/, "");
-  return [base, ...[".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"].flatMap((ext) => [base + ext, stem + ext, `${base}/index${ext}`])].find((p) => files.has(p));
+  return [base, ...[".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"].flatMap((ext) => [base + ext, stem + ext, `${base}/index${ext}`])]
+    .map(p => posix.normalize(p)).find((p) => files.has(p));
 }
 const swapped: Record<string, string> = { ">": ">=", ">=": ">", "<": "<=", "<=": "<", "===": "!==", "!==": "===", "==": "!=", "!=": "==", "&&": "||", "||": "&&", "+": "-", "-": "+", "*": "/", "/": "*" };
 function functionName(node: ts.Node): string {
