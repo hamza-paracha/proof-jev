@@ -6,7 +6,7 @@ body:
     id: finding
     attributes:
       label: The finding
-      description: Category, message, trigger and page from the report.
+      description: Source location, mutation patch or review judgment, and the relevant test result.
       render: text
     validations:
       required: true
@@ -20,4 +20,4 @@ body:
     id: context
     attributes:
       label: Anything else
-      description: "Mode, agent, focus or setup used. A trace helps, but remove anything private first: traces hold screenshots and page contents."
+      description: "Selected Git base, test command, and expected behavior. Remove private source and credentials from reports."

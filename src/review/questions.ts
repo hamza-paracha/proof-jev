@@ -39,9 +39,10 @@ function scrubState<T>(value: T): T {
   return walk(value) as T;
 }
 export interface ReviewRequest { state: EntryType; questions: Questions; truncated: boolean }
-export function fileRequest(chunk: DiffChunk): ReviewRequest {
+export function fileRequest(chunk: DiffChunk, task?: string): ReviewRequest {
   const state = scrubState({ file: chunk.file, previousFile: chunk.previousFile ?? null, language: chunk.language, status: chunk.status,
-    functions: [...chunk.functions], linesChanged: chunk.linesChanged, additions: chunk.additions, deletions: chunk.deletions, context: chunk.context, truncated: chunk.truncated });
+    functions: [...chunk.functions], linesChanged: chunk.linesChanged, additions: chunk.additions, deletions: chunk.deletions, context: chunk.context, truncated: chunk.truncated,
+    ...(task ? { task } : {}) });
   // Remove context first, then old/new lines proportionally, and explicitly mark incompleteness.
   while (Buffer.byteLength(JSON.stringify(state)) > MAX_STATE_BYTES) {
     state.truncated = true;
@@ -49,9 +50,12 @@ export function fileRequest(chunk: DiffChunk): ReviewRequest {
     else if (state.deletions.length > 500) state.deletions = state.deletions.slice(0, Math.floor(state.deletions.length * 0.7));
     else if (state.additions.length > 500) state.additions = state.additions.slice(0, Math.floor(state.additions.length * 0.7));
     else if (state.functions.length) state.functions.pop();
+    else if (state.task) state.task = state.task.slice(0, Math.floor(state.task.length / 2));
     else throw new Error("File metadata exceeds review context bounds");
   }
-  return { state, questions: fileQuestions(), truncated: state.truncated };
+  return { state, questions: { ...fileQuestions(), ...(task ? {
+    task_mismatch: noul(instruction + "Does this file's change contradict an explicit requirement in the supplied task? Missing evidence from other files is uncertainty, not a confirmed mismatch."),
+  } : {}) }, truncated: state.truncated };
 }
 export function prRequest(summary: DiffSummary, title = "", description = ""): ReviewRequest {
   const state = scrubState({ title, description, totalFiles: summary.totalFiles, totalLinesChanged: summary.totalLinesChanged,

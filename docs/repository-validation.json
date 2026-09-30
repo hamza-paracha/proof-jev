@@ -1,0 +1,145 @@
+{
+  "version": "0.5.1",
+  "scope": "Two historical production changes in Proof-Jev itself, using current tests in disposable repositories. This is not an independent multi-project benchmark.",
+  "modelCalls": 0,
+  "sampledMutations": 29,
+  "detectedBefore": 20,
+  "detectedAfter": 25,
+  "untestedCandidates": 21,
+  "cases": [
+    {
+      "case": "diff-parser",
+      "file": "src/review/diff.ts",
+      "historicalCommit": "763bf3d512bf85c212303a3aa90242ab30a8c5e4",
+      "sourceSha256": "e2c7c3eee46bf2d3e31749000c25951a09123192e574656a68a440ba897250c7",
+      "test": "test/review.test.ts",
+      "before": {
+        "candidates": 46,
+        "scheduled": 25,
+        "tested": 25,
+        "detected": 18,
+        "survived": 7,
+        "invalid": 0,
+        "inconclusive": 0,
+        "untested": 21
+      },
+      "after": {
+        "candidates": 46,
+        "scheduled": 25,
+        "tested": 25,
+        "detected": 22,
+        "survived": 3,
+        "invalid": 0,
+        "inconclusive": 0,
+        "untested": 21
+      },
+      "durationMs": {
+        "before": 91976,
+        "after": 112381
+      },
+      "sameSourceAndMutationIds": true,
+      "newlyDetected": [
+        {
+          "id": "6d3816374bfe",
+          "line": 31,
+          "before": "||",
+          "after": "&&"
+        },
+        {
+          "id": "f04cb4e320a5",
+          "line": 47,
+          "before": "||",
+          "after": "&&"
+        },
+        {
+          "id": "39925264d2a0",
+          "line": 55,
+          "before": ">",
+          "after": ">="
+        },
+        {
+          "id": "004e7b82a478",
+          "line": 67,
+          "before": "await realpath((await git(\"rev-parse\", \"--show-toplevel\")).trim()) !== root",
+          "after": "false"
+        }
+      ],
+      "remaining": [
+        {
+          "id": "7f7c5f1b9ea3",
+          "line": 51,
+          "before": "oldRemaining < 0 || newRemaining < 0",
+          "after": "false",
+          "classification": "equivalent rejection behavior",
+          "reason": "Removing the early negative-count guard still rejects malformed hunks at finish(); counters only decrease, so negative remaining counts cannot recover."
+        },
+        {
+          "id": "05fe90b9e868",
+          "line": 51,
+          "before": "||",
+          "after": "&&",
+          "classification": "equivalent rejection behavior",
+          "reason": "Requiring both counts to be negative delays rejection; finish() still rejects whenever either count is nonzero."
+        },
+        {
+          "id": "29576699d784",
+          "line": 79,
+          "before": "false",
+          "after": "true",
+          "classification": "equivalent overwritten initializer",
+          "reason": "The initial truncated flag is always overwritten from skipped/chunk evidence before getDiff returns."
+        }
+      ]
+    },
+    {
+      "case": "evidence-html",
+      "file": "src/evidence/html.ts",
+      "historicalCommit": "03478a7ba0cd9efcf1855374f8d09465138318bb",
+      "sourceSha256": "d465758d9b762999de46236a66c3d173169acff178defc05d071e648f6e91127",
+      "test": "test/evidence-html.test.ts",
+      "before": {
+        "candidates": 4,
+        "scheduled": 4,
+        "tested": 4,
+        "detected": 2,
+        "survived": 2,
+        "invalid": 0,
+        "inconclusive": 0,
+        "untested": 0
+      },
+      "after": {
+        "candidates": 4,
+        "scheduled": 4,
+        "tested": 4,
+        "detected": 3,
+        "survived": 1,
+        "invalid": 0,
+        "inconclusive": 0,
+        "untested": 0
+      },
+      "durationMs": {
+        "before": 1803,
+        "after": 2035
+      },
+      "sameSourceAndMutationIds": true,
+      "newlyDetected": [
+        {
+          "id": "5527ce5e5dea",
+          "line": 46,
+          "before": "!==",
+          "after": "==="
+        }
+      ],
+      "remaining": [
+        {
+          "id": "c086fc958c7d",
+          "line": 46,
+          "before": "+",
+          "after": "-",
+          "classification": "low-impact presentation gap",
+          "reason": "Changes section numbering from i + 1 to i - 1; report evidence and ordering remain intact. No assertion was added solely to increase the mutation score."
+        }
+      ]
+    }
+  ]
+}

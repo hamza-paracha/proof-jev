@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "proof-jev": {
+      "command": "node",
+      "args": ["./bin/plugin.mjs", "--stdio"],
+      "cwd": ".",
+      "tool_timeout_sec": 120
+    }
+  }
+}

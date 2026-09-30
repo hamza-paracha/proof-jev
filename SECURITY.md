@@ -1,15 +1,9 @@
 # Security policy
 
-## Report a vulnerability
+Use [GitHub private vulnerability reporting](https://github.com/hamza-paracha/proof-jev/security/advisories/new) for vulnerabilities. Include the affected version, a minimal reproduction, and its impact. Keep credentials and private source out of reports.
 
-Use [GitHub private vulnerability reporting](https://github.com/hamza-paracha/vouch/security/advisories/new). Include the affected commit, a minimal reproduction using synthetic data, and the impact. Please keep credentials and real application data out of reports.
+Relevant issues include escaping the configured repository or mutation workspace, exposing credentials in evidence, bypassing model budgets, and reporting incomplete execution as successful verification.
 
-This project is maintained on a best-effort basis; it does not provide a response-time or security-support SLA. Fixes target the latest `main` and alpha release.
+Proof-Jev runs configured commands from trusted repositories in disposable copies. Those copies isolate edits but do not provide an operating-system sandbox. Code review sends the authorized diff context to its configured provider. Reports remain local and can contain source and test output. See [execution boundaries](docs/code-verification.md#boundaries) and [review configuration](docs/structured-review.md).
 
-## Scope
-
-Relevant issues include bypassing origin or write-path restrictions; reading local files, environment values or credentials through the tool; escaping configured model budgets; and causing failures or incomplete runs to be reported as passes. Issues in the inherited explorer/runner, including authentication or saved-session exposure, are also in scope.
-
-vouch-jev is intended for controlled disposable local HTTP apps. Its browser proxy is not an operating-system sandbox for hostile sites. Evidence is stored locally and may contain application data. See [documented boundaries](docs/verification.md#bounds-and-current-limits).
-
-A bug that vouch-jev finds in a target application is not itself a vulnerability in vouch-jev.
+This project is maintained on a best-effort basis. Fixes target the latest main branch and alpha release. Bugs found in a target repository belong to that repository's maintainers.

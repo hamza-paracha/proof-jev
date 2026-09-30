@@ -1,16 +1,21 @@
+import { changeHtml } from "../evidence/reports.ts";
 import { constants } from "node:fs";
 import { cp, mkdtemp, mkdir, readFile, rm, writeFile, lstat, realpath } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
-import { snapshotRepository } from "./repository.ts";
+import { snapshotRepository, type RepositorySnapshot } from "./repository.ts";
 import { analyzeSnapshot } from "./analyze.ts";
-import { changeExecutionSchema, projectConfigSchema, type Mutation } from "./schema.ts";
+import { changeExecutionSchema, projectConfigSchema, type Mutation, type ProjectConfig } from "./schema.ts";
 import { runCommand } from "./process.ts";
 import { markdownReport, type ChangeReport } from "./report.ts";
 import { redact } from "../verify/redact.ts";
 
 export interface ChangeOptions { projectRoot?: string; allowExecution?: boolean; outputDir?: string; signal?: AbortSignal }
+// Internal execution controls used by the task loop; never accepted as tool arguments.
+export interface CapturedRun {
+  snapshot: RepositorySnapshot; config: ProjectConfig; maxMutants: number; checks: string[];
+}
 
 export function mutationPatch(m: Mutation, source: string) {
   const updated = source.slice(0, m.start) + m.after + source.slice(m.end);
@@ -32,13 +37,17 @@ export function mutationPatch(m: Mutation, source: string) {
   return out.join("\n") + "\n";
 }
 
-export async function verifyChange(raw: unknown, options: ChangeOptions): Promise<ChangeReport> {
+export async function verifyChange(raw: unknown, options: ChangeOptions, captured?: CapturedRun): Promise<ChangeReport> {
   const input = changeExecutionSchema.parse(raw);
   if (!options.projectRoot || !options.allowExecution) throw new Error("Change execution is disabled. Configure VOUCH_PROJECT_ROOT and VOUCH_ALLOW_EXECUTION=1 for this trusted repository.");
-  const snapshot = await snapshotRepository(options.projectRoot, input.base, options.signal);
+  const snapshot = captured?.snapshot ?? await snapshotRepository(options.projectRoot, input.base, options.signal);
   const configData = snapshot.files.get("vouch.config.json");
-  if (!configData) throw new Error("Add vouch.config.json with an explicit testCommand before running change verification");
-  const config = projectConfigSchema.parse(JSON.parse(configData.toString()));
+  if (!captured && !configData) throw new Error("Add vouch.config.json with an explicit testCommand before running change verification");
+  const config = projectConfigSchema.parse(captured?.config ?? JSON.parse(configData!.toString()));
+  const maxMutants = captured ? Math.min(config.maxMutants, captured.maxMutants) : config.maxMutants;
+  if (!Number.isInteger(maxMutants) || maxMutants < 0) throw new Error("Invalid mutation limit");
+  const checks = [...new Set(captured?.checks ?? [])];
+  for (const name of checks) if (!Object.hasOwn(config.acceptanceChecks, name)) throw new Error(`Unknown acceptance check: ${name}`);
   const plan = analyzeSnapshot(snapshot);
   const started = Date.now(); const runId = `change-${randomUUID()}`;
   const directory = resolve(options.outputDir ?? "out/verification", runId); await mkdir(join(directory, "patches"), { recursive: true, mode: 0o700 });
@@ -46,7 +55,7 @@ export async function verifyChange(raw: unknown, options: ChangeOptions): Promis
   const signal = options.signal ? AbortSignal.any([deadline, options.signal]) : deadline;
   const report: ChangeReport = { schemaVersion: 1, runId, status: "inconclusive", reason: "Verification did not complete", startedAt: new Date(started).toISOString(), durationMs: 0,
     plan, baseline: [], mutations: [], summary: { candidates: plan.candidateCount, scheduled: 0, tested: 0, detected: 0, survived: 0, invalid: 0, inconclusive: 0, untested: plan.candidateCount },
-    artifacts: { report: join(directory, "report.json"), markdown: join(directory, "report.md"), plan: join(directory, "plan.json") },
+    artifacts: { report: join(directory, "report.json"), markdown: join(directory, "report.md"), html: join(directory, "report.html"), plan: join(directory, "plan.json") },
     limitations: [...plan.limitations, "Commands execute trusted repository code in disposable copies, not an OS security sandbox.", "Two baseline runs and repeated failing mutants reduce, but cannot eliminate, nondeterminism.", "Only configured commands ran; no claim of whole-program correctness or runtime coverage is made."] };
   const workspace = await mkdtemp(join(tmpdir(), "vouch-change-")); const template = join(workspace, "template");
   const command = (args: string[]) => args.flatMap((arg) => {
@@ -80,11 +89,28 @@ export async function verifyChange(raw: unknown, options: ChangeOptions): Promis
       const path = await fresh(`baseline-${n}`); const result = await run(config.testCommand, path); report.baseline.push(result); await rm(path, { recursive: true, force: true });
       if (result.outcome !== "passed") { report.status = result.outcome === "failed" && n === 0 ? "baseline_failed" : "inconclusive"; report.reason = n ? "Baseline is unstable or incomplete" : "Unmodified snapshot did not pass the configured tests"; return await finish(); }
     }
+    report.acceptance = [];
+    for (const name of checks) {
+      const check = { name, runs: [] as ChangeReport["baseline"] }; report.acceptance.push(check);
+      for (let n = 0; n < 2; n++) {
+        const path = await fresh(`acceptance-${report.acceptance.length}-${n}`);
+        const result = await run(config.acceptanceChecks[name]!, path); check.runs.push(result);
+        await rm(path, { recursive: true, force: true });
+        if (result.outcome !== "passed") {
+          report.status = result.outcome === "failed" && n === 0 ? "baseline_failed" : "inconclusive";
+          report.reason = `Acceptance check ${name} did not pass consistently`; return await finish();
+        }
+      }
+    }
+    if (maxMutants === 0) {
+      report.status = "evidence_collected"; report.reason = "Configured tests passed; mutation testing was not requested";
+      return await finish();
+    }
     // Spread a bounded sample across files, rather than letting the first large file consume it.
     const groups = new Map<string, Mutation[]>();
     for (const m of plan.mutations) { const group = groups.get(m.file) ?? []; group.push(m); groups.set(m.file, group); }
     const selected: Mutation[] = [];
-    while (selected.length < config.maxMutants) { let added = false; for (const group of groups.values()) { const m = group.shift(); if (m && selected.length < config.maxMutants) { selected.push(m); added = true; } } if (!added) break; }
+    while (selected.length < maxMutants) { let added = false; for (const group of groups.values()) { const m = group.shift(); if (m && selected.length < maxMutants) { selected.push(m); added = true; } } if (!added) break; }
     report.summary.scheduled = selected.length;
     for (const m of selected) {
       signal.throwIfAborted();
@@ -129,7 +155,7 @@ export async function verifyChange(raw: unknown, options: ChangeOptions): Promis
       inconclusive: outcomes.filter((o) => o === "inconclusive").length, untested: Math.max(0, plan.candidateCount - outcomes.length) });
     report.durationMs = Date.now() - started;
     const safe = redact(report);
-    await Promise.all([writeFile(safe.artifacts.report, JSON.stringify(safe, null, 2) + "\n", { mode: 0o600 }),
+    await Promise.all([writeFile(safe.artifacts.html, changeHtml(safe), { mode: 0o600 }), writeFile(safe.artifacts.report, JSON.stringify(safe, null, 2) + "\n", { mode: 0o600 }),
       writeFile(safe.artifacts.plan, JSON.stringify(safe.plan, null, 2) + "\n", { mode: 0o600 }),
       writeFile(safe.artifacts.markdown, markdownReport(safe), { mode: 0o600 })]);
     return safe;

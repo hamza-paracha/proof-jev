@@ -2,7 +2,7 @@ import { z } from "zod";
 import { reviewPath } from "./diff.ts";
 const base = z.string().min(1).max(200);
 const file = z.string().min(1).max(500).refine(reviewPath, "Use an eligible repository-relative file path");
-export const reviewChangeSchema = z.object({ base: base.default("HEAD~1"), focus: z.array(file).min(1).max(20).optional() }).strict();
+export const reviewChangeSchema = z.object({ base: base.default("HEAD~1"), focus: z.array(file).min(1).max(20).optional(), task: z.string().min(1).max(2000).optional() }).strict();
 export const assessPrSchema = z.object({ base: base.default("main"), title: z.string().max(500).optional(), description: z.string().max(2000).optional() }).strict();
 export const checkFileSchema = z.object({ file, base: base.default("HEAD") }).strict();
 export type ReviewAction = "review_change" | "assess_pr" | "check_file";

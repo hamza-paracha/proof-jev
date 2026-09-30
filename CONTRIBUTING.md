@@ -1,35 +1,23 @@
-# Contributing to vouch-jev
+# Contributing to Proof-Jev
 
-Reproducible bugs, clear documentation, and focused fixes are welcome. This is an alpha; help us make its supported local workflows dependable before widening its scope.
-
-## Setup and checks
-
-Use Node.js 22+ and npm:
+Use Node.js 22+, npm, and Git. The code product's checks need no browser or provider credentials:
 
 ```sh
 npm ci
-npx playwright install chromium
 npm run typecheck
 npm test
-npm run verify:demo
 npm run verify:change-demo
-npm run review:build
 npm run verify:install
-npm run verify:example
+npm run plugin:build
+npm run verify:plugin
 ```
 
-On Linux, install Chromium with `--with-deps`. These commands need no provider credentials. Do not add live paid calls to the default test suite or CI.
+Diff analysis and mutation execution live in `src/change/`; structured review lives in `src/review/`. The code-only CLI, MCP server, and setup checks are in `src/verify/`. Tests exercise the real MCP transport and disposable repositories. Paid provider calls must remain outside the default suite and CI.
 
-## Make a focused change
+Run the clean-package and plugin checks when changing packaging, dependencies, CLI, or MCP behavior. Both distributions must expose eight code tools and function without Playwright installed. Keep source-location evidence, explicit execution configuration, persistent model budgets, cancellation, and mutation baseline handling intact.
 
-Explain the problem, the resulting behavior, and how you checked it. Add regression coverage for changes in behavior. Browser verifier code is in `src/verify/`; its tests are `test/verification*.test.ts`. Diff analysis and mutation execution live in `src/change/`, with `test/change-verification.test.ts`. Structured review code lives in `src/review/` with simulated-provider tests in `test/review.test.ts`. The legacy explorer and runner remain in `src/` and have their own tests.
+The source tree contains only the code product. New workflows should target source code and tests.
 
-Changes to HTTP restrictions, write permissions, model routing, budgets, cancellation, or evidence handling need tests that exercise the relevant failure path. Keep models disabled by default; model output must never replace independent assertions or expand permissions. Never automatically refund uncertain paid requests or silently retry writes.
+For a reproducible check against real historical production changes, run `npm run verify:repository` from a full checkout. It writes source hashes, exact mutation patches, and test outcomes under `out/repository-validation/current/`. Investigate survivors against the requirements; do not add assertions merely to force a perfect score.
 
-Run typechecking and the full test suite before submitting. Run `verify:install` when changing packaging, dependencies, CLI, or MCP behavior. Keep docs and examples aligned with shipped behavior.
-
-## Reports that help
-
-Include your commit/version, Node version, OS, a minimal disposable reproduction, expected outcome, and actual status/reason. Redact reports before sharing: accessibility observations can contain application data. Never upload `.env`, credentials, saved sessions, or a production data dump.
-
-Report security vulnerabilities privately using [the security policy](SECURITY.md). Normal application failures found by the verifier belong in your application’s issue tracker.
+Bug reports should include the version, OS, Node version, minimal repository changes, expected outcome, and actual evidence. Redact source or command output before sharing. See [SECURITY.md](SECURITY.md) for private vulnerability reports.

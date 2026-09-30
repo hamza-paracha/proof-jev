@@ -1,75 +1,67 @@
 # Validation evidence
 
-## Version 0.4 candidate
+## Code product
 
-The structured review layer adds three tools alongside browser and mutation verification. **140 tests pass**, including simulated SDK responses over the real MCP transport, bounded concurrency, persistent budgets, cancellation, malformed responses, secret scrubbing and partial-context reporting. The standalone package installs outside the checkout and exposes its three tools without Playwright or the AST parser.
+Proof-Jev exposes eight code tools and three skills. The source tree, test suite, package, and plugin are code-only. The original code-only release passed its 40-test suite and typechecking; task-loop validation is described below. Automated checks cover Git snapshots, mutation attribution, source locations, review transport, persistent budgets, redaction, and cancellation.
 
-A bounded live check ran all three tools against synthetic code: **13 calls**, approximately **$0.000516** estimated input-token cost, and a **638 ms** ten-file review at concurrency 5. Warnings and uncertainty were preserved. These measurements establish connectivity and this particular latency result; they do not establish judgment accuracy or calibrated confidence. See [machine-readable evidence](review-validation.json) and [configuration and limits](structured-review.md).
+`npm run verify:install` installs a fresh package outside the checkout. It checks all eight tools, confirms the absence of browser dependencies, verifies that weak tests miss mutations, and confirms that strengthened tests detect them. `npm run verify:plugin` checks the actual plugin launcher and project discovery.
 
-## Version 0.3 candidate
+## Real repository changes
 
-The local 0.3 candidate adds code-aware verification alongside the browser workflow engine. No paid model calls were made for these checks.
+`npm run verify:repository` challenges Proof-Jev's existing tests against two actual production changes from its Git history:
 
-- **132 automated tests pass**, including the existing explorer, browser verifier, TLS redirects/cookies, named sessions, DOM assertions, mutation execution, executable file modes, patch application and the real MCP transport.
-- Typechecking, the browser demonstration, the disk-backed profile example and the code-verification demonstration pass.
-- A fresh tarball installed outside the checkout passes readiness, browser verification over MCP, change analysis, mutation execution over MCP and verification through the CLI. The self-contained plugin builds and reports ready.
-- An independent disk-backed task-board audit passes **11/11 expected outcomes** with the original three-second step timeout and unread fetch bodies. The 0.2 release produced only **7/11** under those conditions. The change uses proxy response completion for settling; an actually unfinished streaming response still abstains.
-- The code demo begins with tests that pass but miss **3/3 deliberate behavioral mutations**. Adding explicit threshold, zero and negative-input assertions detects **3/3**, with repeated mutant failures and passing baselines. Source code remains unchanged by the engine.
-- Review regressions enforce literal URL matching, prevent redaction from creating false exact action matches, keep both decision tiers scrubbed, and reject file/directory source links introduced by setup before mutation execution.
-- Additional cases stop attribution when baselines are unstable, distinguish invalid mutants from detections, constrain command output/time, and verify that session redaction preserves report paths and protocol fields even with short localStorage values.
+- Diff parsing and source-line evidence introduced in commit `763bf3d`.
+- Offline evidence rendering introduced in commit `03478a7`.
 
-These are controlled regression checks, not proof of general correctness, autonomous specification discovery or production accuracy. Static test reachability is not measured coverage. The runner executes trusted repository code and is not an OS sandbox. See [code verification limits](code-verification.md#boundaries) and the [remaining roadmap](roadmap.md).
+The script creates disposable repositories, restores the selected file's historical before-state as the Git base, and applies the current production file. It uses the current real tests, calls analysis and mutation tools over MCP, and records exact patches, command outcomes, source hashes, and untested candidates. At most 25 mutations are sampled per case. No provider calls are made.
 
-Reproduce with `npm test`, `npm run verify:change-demo`, `npm run verify:demo`, `npm run verify:install`, and `npm run verify:example`. Local audit evidence is retained under `out/candidate-audit/`; demo reports are under `out/change-demo/`. Those generated directories are excluded from distribution. The independent audit is summarized in [validation-0.3.json](validation-0.3.json).
+### Measured result for 0.5.1
 
-## Historical version 0.2 validation
+| Production change | Sampled / candidates | Detected before | Detected after | Remaining |
+| --- | --- | --- | --- | --- |
+| Diff parser and source locations | 25 / 46 | 18 | 22 | 3 behaviorally equivalent mutations |
+| Evidence report rendering | 4 / 4 | 2 | 3 | 1 section-numbering mutation |
 
-Measured during local development on September 22, 2026 (America/Toronto; UTC records are September 23). Machine-readable results are in [validation.json](validation.json). This is a tested local alpha; these measurements do not establish production accuracy or cost savings.
+The before/after runs used identical production source hashes and mutation IDs. Five focused regression tests now catch asymmetric missing hunk lines, trailing patch metadata handling, the exact clipping boundary, nested repository configuration, and omitted source evidence. These were test gaps in otherwise working behavior, not five existing production defects.
 
-## Live Jev smoke test
+The three parser survivors preserve rejection behavior or change an initializer overwritten before return. The remaining rendering mutation only changes section numbering. These are reported honestly rather than forcing a perfect score with message- or formatting-specific assertions. Another 21 parser candidates were outside the bounded sample.
 
-| Scenario | Expected | Observed | Model calls |
-| --- | --- | --- | ---: |
-| Exact control label | Pass | Pass | 0 |
-| “Persist the updated profile” → Save | Pass | Pass | 1 |
-| Same action, server lies about saving | Fail persisted-state assertion | Failed | 1 |
-| Unrelated request to download a tax statement | Abstain | Abstained | 1 |
+Inspection also reproduced and fixed a separate real setup defect: a nested directory was advertised as analysis-ready even though the tools require the Git root. A regression now checks both analysis and separately configured review roots.
 
-The three requests used `jev-1.13.0` and **1,314 input tokens**, with retries disabled. At TypeSafe's published **US$0.042 per million input tokens**, the calculated charge is **US$0.000055188**. This is an estimate based on returned token usage, not a provider-reported invoice. [Official model and pricing reference](https://docs.typesafe.ai/models).
+[Machine-readable comparison and survivor classifications](repository-validation.json). Full local reports are generated under `out/repository-validation/`.
 
-The smoke test's three reservations were retained in `out/verification/live-smoke-ledger.json`; rerunning with that exhausted ledger cannot dispatch more calls. No OpenRouter request or large paid benchmark was run.
+This is self-repository validation, not an independent multi-project benchmark. A surviving mutation requires investigation; equivalent behavior and low-impact formatting differences are distinguished from missing checks that protect product requirements.
 
-## Source-level reproduce → fix → verify
+## Optional Jev review
 
-The coding agent used the **installed Codex plugin's runtime over MCP**, rather than importing the verifier from the checkout, against a separate disk-backed profile application:
+The recorded eight-case synthetic review evaluation identified four regressions and four clean controls. It can be replayed without provider calls. See [methodology](review-evaluation.md) and [recorded baseline](review-quality-baseline.json).
 
-1. Seeded the application with a missing persistence write. The browser still displayed “Profile saved.”
-2. Inspected its accessible controls through `inspect_page` and submitted a workflow through `verify_workflow`.
-3. The toast assertion passed; `assertJson` failed because the authoritative read endpoint returned `Original`. A separate direct disk read confirmed `Original`.
-4. Fixed the application source to await `writeFile` before returning success.
-5. Restarted with independently initialized data and reran the same assertions. The workflow passed; the direct disk read confirmed `Ada Lovelace`.
+The earlier 13-call provider smoke test checked API integration and recorded one ten-file latency measurement. See [recorded integration evidence](review-validation.json). Neither small synthetic run establishes accuracy on representative real repositories or calibrated confidence.
 
-No model calls were needed for this repair verification. This was a seeded defect repaired by the current coding agent, not an autonomous multi-agent benchmark. Source hashes and outcomes are preserved in `validation.json`; full local action evidence and source snapshots are under `out/acceptance/before/` and `out/acceptance/after/` (excluded from distribution). The example checked into `examples/profile-app/server.mjs` contains the fix and can be exercised with `npm run verify:example`.
+## Reproduce
 
-## Installation and automated checks
+```sh
+npm ci
+npm run typecheck
+npm test
+npm run verify:install
+npm run plugin:build
+npm run verify:plugin
+npm run verify:repository
+```
 
-- TypeScript typecheck and **114 tests passed**, covering the upstream explorer plus the new verifier.
-- Fresh npm tarball installed into a separate temporary project; CLI readiness and real MCP workflow execution passed without relying on the checkout's dependencies.
-- Native plugin manifest and skill validators passed. Before the Vouch rename, Codex installed `browser-verify@personal`; its cached executable ran successfully.
-- Claude Code recognized one skill and one bundled MCP server; `claude ... mcp get plugin:browser-verify:browser-verify` reported **Connected**.
-- Network tests cover cross-origin redirect blocking, normal same-origin redirects, POST method preservation, 303 conversion to GET, write-path restrictions and cookie continuity.
-- Budget tests cover reservations shared between independent processes' budget instances, persistence across restarts, lock contention, corruption, cancellation and exhausted limits. Uncertain attempts are never refunded automatically.
-- The optional stronger-model path was tested with simulated API responses: escalation after Jev uncertainty, exact model selection, no provider fallback/retries, malformed JSON, refusals, truncated/oversized responses and budget exhaustion. A deliberately wrong stronger-model selection still failed its independent browser assertion.
-- Tests cover read-only inspection, automatic control discovery, bounded/cancellable state responses, structured evidence and credential redaction without corrupting JSON.
+Repository validation needs a full Git checkout containing the recorded commits. Model review remains disabled unless its provider and persistent budget are explicitly configured. See [code verification boundaries](code-verification.md#boundaries).
 
-## Historical 0.2 release boundaries
+## Task loop and hooks (0.6–0.7.1)
 
-Only controlled local HTTP apps are supported. HTTPS, authenticated-session import, WebSocket-dependent workflows, remote/staging targets and visual assertions are not covered. Use a production preview for development frameworks requiring HMR sockets.
+The current 52-test suite passes serially, and typechecking passes. Regression checks exercise the real task engine, JSON Lines CLI, Node adapter, and MCP lifecycle. They cover a weak-tests → targeted-fix → passing-evidence loop; pinned Git bases and command configuration; failing or unmapped acceptance requirements; stale evidence; bounded mutations; watcher stability; cancellation; shared concurrency; and task context passed to a simulated Jev adapter. Provider behavior is simulated, with no paid calls. Codex hook tests cover automatic prompt capture, completion feedback, preserving the original request through a stop continuation, a bounded continuation count, unchanged-turn suppression, cancellation, requirement mapping, and real MCP transport using the bundled manifest. These deterministic tests do not substitute for the host trust step or a live paid-model session.
 
-The Jev threshold remains uncalibrated on this workload. A representative held-out suite and paired policy comparisons are still needed before claiming reliability or routing savings. OpenRouter has not been live-tested. Native bundles contain dependencies for the machine where they were built; rebuild on another OS/architecture. Public source and an alpha release are distributed through GitHub. There is no npm registry or public plugin marketplace publication.
+The loop's completion decision is evidence for configured checks, not proof that the user's whole request has been fulfilled. See [integration and limitations](task-loop.md).
 
-## Public launch checks
+### Installed 0.7.1 and native Codex validation
 
-The launch candidate was rechecked on Node.js 22.22.0 with models disabled: all 114 tests, typechecking, the paired demo, fresh tarball installation and MCP execution, the disk-backed example, plugin build and readiness check passed. The JSON workflow printed in the README was also extracted and run unchanged against the example app; it passed and the independent file read returned `Ada Lovelace`.
+The installed 0.7.1 bundle was exercised over MCP in a disposable Git repository. Weak tests missed one sampled shipping-boundary mutation; a boundary assertion detected the identical mutation. Separate lifecycle checks confirmed project binding, unchanged-turn suppression, analysis after edits, rejection of a deliberately failing baseline, preservation of the original task during continuation, acceptance of a repair, invalidation of stale passing evidence, and interrupt cancellation.
 
-The example acceptance script now asserts that any successful MCP result also matches the independently read disk value. Public CI repeats typechecking, the full suite, both demos, package installation and plugin readiness on Linux with Node.js 22 and 24. The repository’s [Actions page](https://github.com/hamza-paracha/vouch/actions/workflows/ci.yml) is the source for current CI status.
+A real Codex CLI 0.159.1 session then ran with a local HTTP provider returning scripted responses. The installed plugin's trusted hooks automatically captured the prompt, analyzed an actual shell edit, ran the configured test at completion, and delivered its failing baseline to the next model request. The session made three local provider requests: edit, attempted completion, and one repair continuation. No Proof-Jev tool was manually called by the scripted agent. Test execution was enabled explicitly for that disposable fixture through the session's MCP configuration; this does not enable execution for other projects.
+
+These checks used one local job at a time and zero paid model calls. They validate the installed engine and native hook transport with deterministic responses, not an autonomous model's ability to interpret findings or fix arbitrary code. Native interruption and a successful native repair were not exercised; those paths were checked through the installed MCP lifecycle and automated tests. [Recorded results and scope](automatic-validation.json). Raw local reports remain under `out/automatic-validation/` and are excluded from Git.

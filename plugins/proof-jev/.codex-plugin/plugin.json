@@ -1,0 +1,30 @@
+{
+  "name": "proof-jev",
+  "version": "0.7.1",
+  "license": "MIT",
+  "description": "Review code changes, trace affected tests, and find bugs that passing tests miss with mutation testing.",
+  "author": {
+    "name": "proof-jev contributors"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Proof-Jev",
+    "shortDescription": "Find what passing tests miss.",
+    "longDescription": "Inspect Git diffs, review code with Jev, and challenge tests with deliberate boundary, logic, and validation faults. Reports show exact source locations, surviving patches, and test results.",
+    "developerName": "proof-jev contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Check whether my tests would catch bugs in this change.",
+      "Review my changes and investigate anything risky.",
+      "Set up Proof-Jev for this project."
+    ]
+  },
+  "mcpServers": "./.mcp.codex.json",
+  "homepage": "https://github.com/hamza-paracha/proof-jev",
+  "repository": "https://github.com/hamza-paracha/proof-jev",
+  "hooks": "./hooks/codex.json"
+}

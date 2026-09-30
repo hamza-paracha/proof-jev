@@ -15,9 +15,9 @@ try {
   assert.ok(!packed.files.some((f: { path: string }) => /(?:^|\/)(?:\.env|auth|out|node_modules)(?:\/|$)/.test(f.path)));
   const consumer = join(dir, "consumer"); await mkdir(consumer);
   execFileSync("npm", ["install", "--prefix", consumer, "--ignore-scripts", "--no-audit", "--no-fund", join(dir, packed.filename)], { stdio: "pipe" });
-  const pkg = join(consumer, "node_modules/vouch-jev-guard"); const binary = join(pkg, "bin/guard.mjs");
-  for (const command of ["vouch-jev-guard", "vouch-guard"]) {
-    assert.match(execFileSync(join(consumer, "node_modules/.bin", command), ["--help"], { cwd: consumer, encoding: "utf8" }), /Usage: vouch-jev-guard /);
+  const pkg = join(consumer, "node_modules/proof-jev-guard"); const binary = join(pkg, "bin/guard.mjs");
+  for (const command of ["proof-jev-guard", "vouch-jev-guard", "vouch-guard"]) {
+    assert.match(execFileSync(join(consumer, "node_modules/.bin", command), ["--help"], { cwd: consumer, encoding: "utf8" }), /Usage: proof-jev-guard /);
   }
   await assert.rejects(access(join(consumer, "node_modules/playwright"))); await assert.rejects(access(join(consumer, "node_modules/typescript-ast")));
   const dependencies = JSON.parse(await readFile(join(pkg, "package.json"), "utf8")).dependencies;
@@ -26,8 +26,9 @@ try {
   await client.connect(new StdioClientTransport({ command: process.execPath, args: [binary, "--stdio"], cwd: consumer, env, stderr: "pipe" }));
   assert.deepEqual((await client.listTools()).tools.map(t => t.name), ["review_change", "assess_pr", "check_file"]);
   const result = await client.callTool({ name: "check_file", arguments: { file: "src/pricing.mjs" } });
-  const report = result.structuredContent as { status: string; cost: { totalCalls: number } };
+  const report = result.structuredContent as { status: string; cost: { totalCalls: number }; artifacts: { html: string } };
   assert.equal(report.status, "error"); assert.equal(report.cost.totalCalls, 0);
+  assert.match(await readFile(report.artifacts.html, "utf8"), /Structured code review/);
   assert.match(execFileSync(process.execPath, [binary, "--help"], { cwd: consumer, env, encoding: "utf8" }), /Code review only/);
   console.log(JSON.stringify({ package: packed.filename, installedOutsideCheckout: true, noBrowserDependency: true, threeTools: true, disabledByDefault: true, modelCalls: 0 }, null, 2));
 } finally { await client.close(); await fixture.close(); await rm(dir, { recursive: true, force: true }); }
